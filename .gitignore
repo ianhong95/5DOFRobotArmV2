@@ -1,0 +1,6 @@
+python_workspace/__pycache__
+python_workspace/scservo_sdk/__pycache__
+python_workspace/venv
+python_workspace/api_logs.log
+python_workspace/debug_tools/.printer_history
+python_workspace/debug_tools/api_logs.log

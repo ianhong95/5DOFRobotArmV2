@@ -1,0 +1,362 @@
+'''
+
+'''
+
+
+# Standard library imports
+import json
+import logging
+import time
+from math import pi, degrees, radians
+
+# 3rd party library imports
+import numpy as np
+
+# Custom library imports
+from scservo_sdk import *   # Uses SC Servo SDK library
+import kinematics as k
+
+# Initialize logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename="api_logs.log", level=logging.INFO)
+
+
+class RobotArm:
+    def __init__(self):
+        # Set up connection to robot
+        self._load_config()
+        self.conn = self._startConnection()
+        self.packetHandler = sms_sts(self.conn)
+
+        # Initialize joint info dictionary
+        self.joint_info = {
+            1: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.SPEED,
+                "accel": self.ACCEL,
+                "enabled": 0
+            },
+            2: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.SPEED,
+                "accel": self.ACCEL,
+                "enabled": 0
+            },
+            3: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.SPEED,
+                "accel": self.ACCEL,
+                "enabled": 0
+            },
+            4: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.SPEED,
+                "accel": self.ACCEL,
+                "enabled": 0
+            },
+            5: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.SPEED,
+                "accel": self.ACCEL,
+                "enabled": 0
+            },                                
+        }
+
+        # Search for servo IDs and store them in a list
+        self.activeServos = self._getActiveServos()
+
+
+        # Wait a couple of seconds for all operations to complete
+        time.sleep(2)
+        print("Robot initialized successfully")
+
+
+    ''' INTERNAL METHODS '''
+
+    def _load_config(self):
+        ''' Load configuration settings from a config.json file, and initialize them as properties for the class. '''
+
+        # Load the config file
+        config_file = "config.json"
+        try:
+            with open(config_file, "r") as config_file:
+                config = json.load(config_file)
+        except:
+            print(f"{config_file} not found.")
+            exit()
+
+        # Load serial connection settings
+        self.BAUDRATE = config["serial_settings"]["baudrate"]
+        self.DEVICE = config["serial_settings"]["device"]
+
+        # Load servo settings
+        self.MAX_ID = config["servo_params"]["max_id"]
+        self.SPEED = config["servo_params"]["default_speed"]
+        self.ACCEL = config["servo_params"]["default_accel"]
+        self.MIN_POS = config["servo_params"]["min_pos"]
+        self.MAX_POS = config["servo_params"]["max_pos"]
+        self.CENTER_POS = config["servo_params"]["center_pos"]
+
+        # Close file when finished
+        config_file.close()
+
+
+    def _startConnection(self):
+        ''' Begin serial communication with the robot. Ensure that the robot's "serial forwarding" setting is turned on. '''
+
+        # Create an instance of the PortHandler object, which is basically the connection object.
+        portHandler = PortHandler(self.DEVICE)
+
+        if portHandler.openPort():
+            print(f"Port opened successfully: {self.DEVICE}")
+
+        else:
+            print("Failed to open the port")
+            exit()
+        
+        if portHandler.setBaudRate(self.BAUDRATE):
+            print(f"Baudrate set to {self.BAUDRATE} successfully")
+        else:
+            print("Failed to change the baudrate")
+            exit()
+
+        return portHandler
+    
+
+    def _getActiveServos(self):
+        activeServos = []
+        joint_idx = 1
+        for id in range(self.MAX_ID):
+            sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+            if sts_comm_result == 0:
+                activeServos.append(id)
+                self.joint_info[joint_idx]["servo_id"] = id
+                joint_idx += 1
+                print(f"Found active servo. ID: {id}.")
+        
+        return activeServos
+
+
+    def _angleToServoPos(self, angle:float, unit:str="deg"):
+        '''
+        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value.
+        By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        '''
+
+        match unit:
+            case "deg":
+                magnitude = (angle / 180.0) * self.CENTER_POS
+            case "rad":
+                magnitude = angle / (2 * pi)
+            case _:
+                print("Invalid unit.")
+
+        if angle >= 0:
+            pos = self.CENTER_POS + magnitude
+        elif angle < 0:
+            pos = self.CENTER_POS - magnitude
+
+        return pos
+            
+
+    def _servoPosToAngle(self, servo_pos:float, unit:str="deg"):
+        '''
+        Converts an servo position value to an angle. By default, the output angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        '''
+        match unit:
+            case "deg":
+                return ((360.0 / 4095) * servo_pos) - 180
+            case "rad":
+                return ((2 * pi / 4095) * servo_pos) - pi
+            case _:
+                print("Invalid unit.")                
+        
+
+    ''' UTILITY METHODS '''
+
+    def ping(self, id:int):
+        ''' Ping one or multiple servos.
+        
+        Pass an id integer from 1 to MAX_ID to ping a particular servo.
+        Passing an id of 0 will ping all servos.
+        '''
+        single_success = False
+
+        match id:
+            case 0:
+                for id in self.activeServos:
+                    sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+                    if sts_comm_result == 0:
+                        print(f"[ID:{id}] ping succeeded. STServo model number: {sts_model_number}")
+                        single_success = True
+            case _:
+                sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+                if sts_comm_result == 0:
+                    print(f"[ID:{id}] ping succeeded. STServo model number: {sts_model_number}")
+                    single_success = True
+
+        if single_success == False:
+            print(f"No motors were found.")
+
+
+    def setID(self, current_id:int, new_id:int):
+        self.packetHandler.SetID(current_id, new_id)
+
+
+    ''' READ METHODS '''
+
+    def readServoPos(self, id:int):
+        ''' Read the position of one or multiple servos.
+        
+        Pass an id integer from 1 to MAX_ID to read the position of a particular servo.
+        Passing an id of 0 will read the positions of all servos.
+        '''
+
+        match id:
+            case 0:
+                joint_idx = 1
+                for id in self.activeServos:
+                    sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                    if sts_comm_result == 0:
+                        self.joint_info[joint_idx]["servo_pos"] = sts_current_position
+                        print(f"Servo [ID {id}] position: {sts_current_position}")
+                    else:
+                        print(f"Error reading servo with ID {id}: {sts_error}")
+            case _:
+                sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                if sts_comm_result == 0:
+                    print(f"Servo [ID {id}] position: {sts_current_position}")
+                else:
+                    print(f"Error reading servo with ID {id}: {sts_error}")
+            
+
+    def readJointAngle(self, id:int):
+        match id:
+            case 0:
+                joint_angles = []
+                joint_idx = 1
+                for id in self.activeServos:
+                    sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                    if sts_comm_result == 0:
+                        self.joint_info[joint_idx]["servo_pos"] = sts_current_position
+                        angle = round(self._servoPosToAngle(sts_current_position), 1)
+                        self.joint_info[joint_idx]["angle"] = angle
+                        joint_angles.append(angle)
+
+                        joint_idx += 1
+
+                print(f"All angles: {joint_angles}")
+            case _:
+                sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                if sts_comm_result == 0:
+
+                    for i, key in enumerate(self.joint_info):
+                        if key["id"]==id:
+                            self.joint_info[key]["servo_pos"] = sts_current_position
+                            angle = self._servoPosToAngle(sts_current_position)
+                            self.joint_info[key]["angle"] = angle
+                            print(f"Servo [ID {id}] angle: {angle}")
+
+
+    def contReadJointAngle(self, id:int):
+        while(True):
+            self.readJointAngle(id)
+
+
+    ''' MANUAL SERVO CONTROL METHODS '''
+
+    def disableServo(self, id:int):
+        pass
+
+
+    def writeServoPos(self, id:int, pos: int):
+        ''' Write position to a servo, and it will run at the default speed and acceleration.
+        
+        Pass an id integer from 1 to MAX_ID to write a position to a particular servo.
+        Passing an id of 0 will write to all servos.
+        '''
+
+        match id:
+            case 0:
+                for id in self.activeServos:
+                    sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                    if sts_comm_result == 0:
+                        print(f"Servo [ID {id}] new position: {pos}")
+                    else:
+                        print(f"Error writing to servo with ID {id}: {sts_error}.")
+            case _:
+                sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                if sts_comm_result == 0:
+                    print(f"Servo [ID {id}] new position: {pos}")
+                else:
+                    print(f"Error writing to servo with ID {id}: {sts_error}.")
+
+
+    def writeAngle(self, id:int, angle:float):
+        ''' Write an angle to a servo or all servos. The input angle is in degrees.'''
+        servo_pos = int(self._angleToServoPos(angle))
+
+        match id:
+            case 0:
+                print(f"case 0")
+                for id in self.activeServos:
+                    sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                    if sts_comm_result == 0:
+                        print(f"Servo [ID {id}] new angle: {angle}")
+                        print(f"Servo [ID {id}] new position: {servo_pos}")
+                    else:
+                        print(f"Error writing to servo with ID {id}: {sts_error}.")
+            case _:
+                print(f"case _")
+                sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                if sts_comm_result == 0:
+                    print(f"Servo [ID {id}] new position: {servo_pos}")
+                else:
+                    print(f"Error writing to servo with ID {id}: {sts_error}.")
+
+    def setSpeed(self, speed:int):
+        '''
+        Globally sets the speed
+        '''
+
+    
+    def readEnableSetting(self, id):
+        print(self.packetHandler.readEnable(id))
+
+
+    ''' Kinematics '''
+    def getEEPose(self):
+        self.readJointAngle(0)
+
+        joint_angles = []
+        _joint_angles_deg = []
+        for joint in self.joint_info:
+            joint_angles.append(radians(round(self.joint_info[joint]["angle"], 2)))
+            _joint_angles_deg.append(round(self.joint_info[joint]["angle"], 2))
+        print(f"Joint angles in radians: {joint_angles}")
+        print(f"Joint angles in degrees: {_joint_angles_deg}")
+
+        FK = k.get_FK_mat(joint_angles)
+        print(f"FK: {FK}")
+        return FK
+
+
+    def getJointAnglesFromTF(self):
+        fk = self.getEEPose()
+        joint_angles = k.calc_joint_angles(fk)
+
+        deg_angles = []
+
+        for ang in joint_angles:
+            deg_angles.append(degrees(ang))
+        print(deg_angles)
