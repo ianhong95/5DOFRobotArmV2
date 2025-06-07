@@ -6,8 +6,8 @@
     },
     "servo_params": {
         "max_id": 60,
-        "default_speed": 250,
-        "default_accel": 100,
+        "default_speed": 1000,
+        "default_accel": 10,
         "min_pos": 0,
         "max_pos": 4095,
         "center_pos": 2047,
@@ -15,32 +15,35 @@
     },
     "DH_params": {
         "joint_1": {
-            "d": 0.10436,
+            "d": 29.96,
             "a": 0,
-            "alpha": 1.570796327
+            "alpha": 1.57079632679
         },
         "joint_2": {
             "d": 0,
-            "a": 0.180,
+            "a": 180.0,
             "alpha": 0
         },
         "joint_3": {
             "d": 0,
-            "a": 0.160,
+            "a": 160.0,
             "alpha": 0
         },
         "joint_4": {
             "d": 0,
             "a": 0,
-            "alpha": 1.570796327
+            "alpha": 1.57079632679
         },
         "joint_5":  {
-            "d": 0.0722,
+            "d": 72.2,
             "a": 0,
             "alpha": 0
         }
     },
     "defined_positions": {
-        "home": []
+        "home": [-0.00, -37.49, 126.20, 89.54, 0.00]
+    },
+    "run_params": {
+        "move_delay": 1
     }
 }

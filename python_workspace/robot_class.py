@@ -5,7 +5,7 @@ TODO:
 - Add more debugging methods
 - Clean up hacky code
 - Continuously read position?
-- Implement deadband to prevent jitter?
+- Implement deadband?
 - Add a method to read and save current position to config.json or to an attribute
 - Set wrist or EE orientation
 '''
@@ -65,7 +65,7 @@ class RobotArm:
                 "servo_id": 0,
                 "servo_pos": 0,
                 "angle": 0,
-                "speed": self.SPEED,
+                "speed": self.SPEED+250,
                 "accel": self.ACCEL,
                 "enabled": 0
             },
@@ -73,7 +73,7 @@ class RobotArm:
                 "servo_id": 0,
                 "servo_pos": 0,
                 "angle": 0,
-                "speed": self.SPEED,
+                "speed": self.SPEED+500,
                 "accel": self.ACCEL,
                 "enabled": 0
             },                                
@@ -85,6 +85,8 @@ class RobotArm:
         # Initialize kinematics
         self.current_tf = self.computeFK()
 
+        # Initialize check properties
+        self.move_complete = True
 
         # Wait a couple of seconds for all operations to complete
         print("Robot initialized successfully")
@@ -119,6 +121,9 @@ class RobotArm:
 
         # Load running parameters
         self.MOVE_DELAY = config["run_params"]["move_delay"]
+
+        # Load pre-defined positions
+        self.HOME = config["defined_positions"]["home"]     # A list of angles in degrees
 
         # Close file when finished
         config_file.close()
@@ -171,7 +176,6 @@ class RobotArm:
                 pos_change = (angle / 180.0) * self.CENTER_POS
             case "rad":
                 pos_change = (angle / (pi)) * self.CENTER_POS
-                print(f"pos_change: {pos_change}")
             case _:
                 print("Invalid unit.")
 
@@ -270,6 +274,8 @@ class RobotArm:
                         joint_angles.append(angle)
 
                         joint_idx += 1
+
+                print([degrees(joint_angle) for joint_angle in joint_angles])
             case _:
                 sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
                 if sts_comm_result == 0:
@@ -282,10 +288,29 @@ class RobotArm:
                             print(f"Servo [ID {id}] angle: {angle}")
 
 
+
     def contReadJointAngle(self, id:int):
         while(True):
             self.readJointAngle(id)
 
+
+    def checkIfMoving(self):
+        '''
+        Blocks execution of code until the move_complete flag is set to True.
+        '''
+
+        while self.move_complete==False:
+            moving_checks = [None, None, None, None, None]
+
+            for idx, servo_id in enumerate(self.activeServos):
+                is_moving, sts_comm_result, sts_error = self.packetHandler.ReadMoving(servo_id)
+                moving_checks[idx] = is_moving
+            if 1 in moving_checks:
+                self.move_complete = False
+            else:
+                self.move_complete = True
+                print(f"movement complete")
+                    
 
     ''' MANUAL SERVO CONTROL METHODS '''
 
@@ -314,6 +339,25 @@ class RobotArm:
                     print(f"Servo [ID {id}] new position: {pos}")
                 else:
                     print(f"Error writing to servo with ID {id}: {sts_error}.")
+
+
+    def syncWriteServoPos(self, id_list:list, pos_list:list, speed_list:list=None, accel_list:list=None):
+        '''
+        I don't really know what the low level function does.
+
+        TODO: Add individual servo speed/accel control.
+        '''
+
+        for (id, servo_pos) in zip(id_list, pos_list):
+            # Add parameters to memory
+            sts_addparam_result = self.packetHandler.SyncWritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+
+            # Write the parameters that were in memory
+            sts_comm_result = self.packetHandler.groupSyncWrite.txPacket()
+
+            # Clear memory
+            self.packetHandler.groupSyncWrite.clearParam()
+
 
 
     def writeAngle(self, id:int, angle:float):
@@ -354,9 +398,23 @@ class RobotArm:
             idx += 1
 
 
+    def syncWriteAngles(self, angles:list):
+        '''
+        Sync write?
+        '''
+        self.checkIfMoving()
+
+        servo_positions = [self._angleToServoPos(angle, "rad") for angle in angles]
+        ids = [joint["servo_id"] for joint in self.joint_info.values()]
+
+        self.syncWriteServoPos(ids, servo_positions)
+
+        self.move_complete = False
+
+
     def setSpeed(self, speed:int):
         '''
-        Globally sets the speed
+        Globally sets the speed. I don't think this is very useful right now.
         '''
 
     
@@ -409,9 +467,7 @@ class RobotArm:
         Returns a list of joint angles.
         '''
         current_frame = self.computeFK()
-        print(f"current_frame: {current_frame}")
         target_frame = k.tf_from_position(pos_vec, current_frame)
-        print(f"target_frame: {target_frame}")
         
         target_joint_angles = k.calcAllJointAngles(target_frame)
 
@@ -432,40 +488,61 @@ class RobotArm:
     
     '''
     
-    def moveX(self, x):
+    def moveX(self, x, delay=None):
         '''
         Linear move in the x direction.\n
         Pass an argument for the distance to move in mm.
         '''
+        if delay==None:
+            delay = self.MOVE_DELAY
 
         target_joint_angles = self.computeIKFromPosition([x, 0, 0])
-
-        self.writeAllAngles(target_joint_angles)
+        self.syncWriteAngles(target_joint_angles)
+        time.sleep(delay)
 
         return self
 
 
-    def moveY(self, y):
+    def moveY(self, y, delay=None):
         '''
         Linear move in the y direction.\n
         Pass an argument for the distance to move in mm.
         '''
-        
-        target_joint_angles = self.computeIKFromPosition([0, y, 0])
+        if delay==None:
+            delay = self.MOVE_DELAY
 
-        self.writeAllAngles(target_joint_angles)
+        target_joint_angles = self.computeIKFromPosition([0, y, 0])
+        self.syncWriteAngles(target_joint_angles)
+        time.sleep(delay)
 
         return self
     
 
-    def moveZ(self, z):
+    def moveZ(self, z, delay=None):
         '''
         Linear move in the z direction.\n
         Pass an argument for the distance to move in mm.        
         '''
-        
-        target_joint_angles = self.computeIKFromPosition([0, 0, z])
+        if delay==None:
+            delay = self.MOVE_DELAY
 
-        self.writeAllAngles(target_joint_angles)
+        target_joint_angles = self.computeIKFromPosition([0, 0, z])
+        self.syncWriteAngles(target_joint_angles)
+        time.sleep(delay)
+
+        return self
+    
+
+    def home(self, delay=None):
+        '''
+        Go to the home position defined in config.json. This method sets a manual target angle to each servo.
+        '''
+
+        if delay==None:
+            delay = self.MOVE_DELAY
+
+        targets_in_radians = [radians(angle) for angle in self.HOME]
+        self.syncWriteAngles(targets_in_radians)
+        time.sleep(delay)
 
         return self

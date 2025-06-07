@@ -291,7 +291,7 @@ def calcAllJointAngles(tf_matrix):
     rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
 
     theta_4 = round(asin(rot_mat_product[1, 2]), 2)    # Use sin to avoid some solution ambiguity (cos is symmetric about 0)
-    theta_5 = round(acos(rot_mat_product[2, 1]), 2)
+    theta_5 = round(asin(rot_mat_product[2, 0]), 2)    # Use sin to avoid some solution ambiguity
 
     joint_angles.append(theta_4)
     joint_angles.append(theta_5)
