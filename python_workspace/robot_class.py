@@ -1,7 +1,14 @@
 '''
+This is a library for the RobotArm class that contains all the attributes and methods to control the arm.
 
+TODO:
+- Add more debugging methods
+- Clean up hacky code
+- Continuously read position?
+- Implement deadband to prevent jitter?
+- Add a method to read and save current position to config.json or to an attribute
+- Set wrist or EE orientation
 '''
-
 
 # Standard library imports
 import json
@@ -75,9 +82,11 @@ class RobotArm:
         # Search for servo IDs and store them in a list
         self.activeServos = self._getActiveServos()
 
+        # Initialize kinematics
+        self.current_tf = self.computeFK()
+
 
         # Wait a couple of seconds for all operations to complete
-        time.sleep(2)
         print("Robot initialized successfully")
 
 
@@ -106,6 +115,10 @@ class RobotArm:
         self.MIN_POS = config["servo_params"]["min_pos"]
         self.MAX_POS = config["servo_params"]["max_pos"]
         self.CENTER_POS = config["servo_params"]["center_pos"]
+        self.DEADBAND = config["servo_params"]["deadband"]
+
+        # Load running parameters
+        self.MOVE_DELAY = config["run_params"]["move_delay"]
 
         # Close file when finished
         config_file.close()
@@ -149,29 +162,31 @@ class RobotArm:
 
     def _angleToServoPos(self, angle:float, unit:str="deg"):
         '''
-        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value.
-        By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value. By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.\n
+        Returns a servo position value from min_pos to max_pos.
         '''
 
         match unit:
             case "deg":
-                magnitude = (angle / 180.0) * self.CENTER_POS
+                pos_change = (angle / 180.0) * self.CENTER_POS
             case "rad":
-                magnitude = angle / (2 * pi)
+                pos_change = (angle / (pi)) * self.CENTER_POS
+                print(f"pos_change: {pos_change}")
             case _:
                 print("Invalid unit.")
 
         if angle >= 0:
-            pos = self.CENTER_POS + magnitude
+            pos = self.CENTER_POS + pos_change
         elif angle < 0:
-            pos = self.CENTER_POS - magnitude
+            pos = self.CENTER_POS + pos_change
 
-        return pos
+        return int(pos)
             
 
     def _servoPosToAngle(self, servo_pos:float, unit:str="deg"):
         '''
-        Converts an servo position value to an angle. By default, the output angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        Converts an servo position value to an angle.\n
+        Returns an angle in degrees by default, but you can specify "rad" to change it to radians.
         '''
         match unit:
             case "deg":
@@ -179,7 +194,7 @@ class RobotArm:
             case "rad":
                 return ((2 * pi / 4095) * servo_pos) - pi
             case _:
-                print("Invalid unit.")                
+                print("Invalid unit.")
         
 
     ''' UTILITY METHODS '''
@@ -216,7 +231,8 @@ class RobotArm:
     ''' READ METHODS '''
 
     def readServoPos(self, id:int):
-        ''' Read the position of one or multiple servos.
+        '''
+        Read the position of one or multiple servos.
         
         Pass an id integer from 1 to MAX_ID to read the position of a particular servo.
         Passing an id of 0 will read the positions of all servos.
@@ -249,13 +265,11 @@ class RobotArm:
                     sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
                     if sts_comm_result == 0:
                         self.joint_info[joint_idx]["servo_pos"] = sts_current_position
-                        angle = round(self._servoPosToAngle(sts_current_position), 1)
+                        angle = round(self._servoPosToAngle(sts_current_position, "rad"), 5)
                         self.joint_info[joint_idx]["angle"] = angle
                         joint_angles.append(angle)
 
                         joint_idx += 1
-
-                print(f"All angles: {joint_angles}")
             case _:
                 sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
                 if sts_comm_result == 0:
@@ -304,6 +318,7 @@ class RobotArm:
 
     def writeAngle(self, id:int, angle:float):
         ''' Write an angle to a servo or all servos. The input angle is in degrees.'''
+
         servo_pos = int(self._angleToServoPos(angle))
 
         match id:
@@ -324,39 +339,133 @@ class RobotArm:
                 else:
                     print(f"Error writing to servo with ID {id}: {sts_error}.")
 
+
+    def writeAllAngles(self, angles:list):
+        '''
+        Writes angles to all servos. Takes a list of angles (radians) as an argument.
+        '''
+
+        # servo_positions = list(map(lambda angle: self._angleToServoPos(angle, "rad"), angles))
+        servo_positions = [self._angleToServoPos(angle, "rad") for angle in angles]
+        idx = 0
+
+        for joint in self.joint_info.values():
+            self.writeServoPos(joint["servo_id"], servo_positions[idx])
+            idx += 1
+
+
     def setSpeed(self, speed:int):
         '''
         Globally sets the speed
         '''
 
     
-    def readEnableSetting(self, id):
+    def readEnableSetting(self, id:int):
         print(self.packetHandler.readEnable(id))
 
 
     ''' Kinematics '''
-    def getEEPose(self):
+    def computeFK(self):
+        '''
+        Compute the forward kinematics by reading the current joint angles.\n
+        Returns a 4x4 matrix that represents the rotation and position of the end effector.
+        '''
         self.readJointAngle(0)
 
-        joint_angles = []
-        _joint_angles_deg = []
-        for joint in self.joint_info:
-            joint_angles.append(radians(round(self.joint_info[joint]["angle"], 2)))
-            _joint_angles_deg.append(round(self.joint_info[joint]["angle"], 2))
-        print(f"Joint angles in radians: {joint_angles}")
-        print(f"Joint angles in degrees: {_joint_angles_deg}")
+        joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
         FK = k.get_FK_mat(joint_angles)
+
         print(f"FK: {FK}")
+
         return FK
+    
+
+    def getEEPos(self):
+        '''
+        Get the end effector's position in Cartesian coordinates relative to the base frame.
+        Returns a 3x1 position vector.
+        '''
+        fk_mat = self.computeFK()
+        pos_vec = fk_mat[:3, 3].transpose()
+
+        return pos_vec
+
+
+    def getEERot(self):
+        '''
+        Get the end effector's rotation matrix relative to the base frame.
+        Returns a 3x3 rotation matrix.
+        '''
+        fk_mat = self.computeFK()
+        rot_mat = fk_mat[:3,:3]
+
+        return rot_mat
+
+
+    def computeIKFromPosition(self, pos_vec:list):
+        '''
+        Compute the inverse kinematics given a position vector [x, y, z].\n
+        Returns a list of joint angles.
+        '''
+        current_frame = self.computeFK()
+        print(f"current_frame: {current_frame}")
+        target_frame = k.tf_from_position(pos_vec, current_frame)
+        print(f"target_frame: {target_frame}")
+        
+        target_joint_angles = k.calcAllJointAngles(target_frame)
+
+        return target_joint_angles
 
 
     def getJointAnglesFromTF(self):
-        fk = self.getEEPose()
+        fk = self.computeFK()
         joint_angles = k.calc_joint_angles(fk)
 
-        deg_angles = []
+        deg_angles = [angle for angle in joint_angles]
 
-        for ang in joint_angles:
-            deg_angles.append(degrees(ang))
         print(deg_angles)
+
+
+    '''
+    BASIC MOTIONS
+    
+    '''
+    
+    def moveX(self, x):
+        '''
+        Linear move in the x direction.\n
+        Pass an argument for the distance to move in mm.
+        '''
+
+        target_joint_angles = self.computeIKFromPosition([x, 0, 0])
+
+        self.writeAllAngles(target_joint_angles)
+
+        return self
+
+
+    def moveY(self, y):
+        '''
+        Linear move in the y direction.\n
+        Pass an argument for the distance to move in mm.
+        '''
+        
+        target_joint_angles = self.computeIKFromPosition([0, y, 0])
+
+        self.writeAllAngles(target_joint_angles)
+
+        return self
+    
+
+    def moveZ(self, z):
+        '''
+        Linear move in the z direction.\n
+        Pass an argument for the distance to move in mm.        
+        '''
+        
+        target_joint_angles = self.computeIKFromPosition([0, 0, z])
+
+        self.writeAllAngles(target_joint_angles)
+
+        return self

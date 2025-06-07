@@ -6,11 +6,12 @@
     },
     "servo_params": {
         "max_id": 60,
-        "default_speed": 100,
+        "default_speed": 250,
         "default_accel": 100,
         "min_pos": 0,
         "max_pos": 4095,
-        "center_pos": 2047
+        "center_pos": 2047,
+        "deadband": 10
     },
     "DH_params": {
         "joint_1": {

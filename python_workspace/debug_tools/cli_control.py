@@ -30,7 +30,7 @@ def runTerminal():
     except:
         print("Error connecting to robot")
 
-    time.sleep(2)
+    time.sleep(1)
 
     while True:
         cmd = input("> ")

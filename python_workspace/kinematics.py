@@ -241,7 +241,7 @@ def calc_theta_3(wrist_pos_vector):
     a = sqrt((wx**2) + (wy**2))
     b = wz - DH_PARAMETERS["joint_1"]["d"]  # wz - d1
 
-    numerator = (a**2) + (b**2) - (DH_PARAMETERS["joint_2"]["a"] **2) - (DH_PARAMETERS["joint_3"]["a"] **2)
+    numerator = (a**2) + (b**2) - (DH_PARAMETERS["joint_2"]["a"] ** 2) - (DH_PARAMETERS["joint_3"]["a"] ** 2)
     denominator = 2 * DH_PARAMETERS["joint_2"]["a"] * DH_PARAMETERS["joint_3"]["a"]
 
     try:
@@ -269,23 +269,23 @@ def calc_theta_2(wrist_pos_vector, theta_3):
     return theta_2
 
 
-def calc_joint_angles(tf_matrix):
+def calcWristPosAngles(tf_matrix):
     wrist_pos = calc_wrist_position(tf_matrix)
     theta_1 = round(calc_theta_1(wrist_pos), 5)
     theta_3 = round(calc_theta_3(wrist_pos), 5)    # Flip sign because I'm dumb and messed up frame assignment
     
     theta_2 = pi/2 - round(calc_theta_2(wrist_pos, -theta_3), 5)     # Subtract pi/2 because of frame assignment
 
-    position_angles = [theta_1, theta_2, theta_3]
+    wrist_pos_angles = [theta_1, theta_2, theta_3]
 
-    return position_angles
+    return wrist_pos_angles
 
 
-def calc_orientation_angles(tf_matrix):
-    position_angles = calc_joint_angles(tf_matrix)
+def calcAllJointAngles(tf_matrix):
+    joint_angles = calcWristPosAngles(tf_matrix)
     rot_mat_16 = tf_matrix[:3, :3]
 
-    rot_matrix_14 = rot_mat_14(position_angles[0], position_angles[1], position_angles[2])
+    rot_matrix_14 = rot_mat_14(joint_angles[0], joint_angles[1], joint_angles[2])
     rot_mat_14_inv = rot_matrix_14.transpose()
 
     rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
@@ -293,9 +293,15 @@ def calc_orientation_angles(tf_matrix):
     theta_4 = round(asin(rot_mat_product[1, 2]), 2)    # Use sin to avoid some solution ambiguity (cos is symmetric about 0)
     theta_5 = round(acos(rot_mat_product[2, 1]), 2)
 
-    orientation_angles = [theta_4, theta_5]
+    joint_angles.append(theta_4)
+    joint_angles.append(theta_5)
 
-    return orientation_angles
+    return joint_angles
+
+
+def getWristOriAngles(joint_angles:list):
+    ''' Slice the list of joint angles to return only the wrist orientation angles (last 2 values). '''
+    return joint_angles[3:]
 
 
 # --- TRANSLATIONS AND ROTATIONS ---
