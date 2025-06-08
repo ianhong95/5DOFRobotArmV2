@@ -1,19 +1,21 @@
 from math import sin, cos, atan, atan2, pi, sqrt, acos, asin, degrees, radians
 import json
+import os
 
 import numpy as np
 
 
 # --- PHYSICAL ROBOT PARAMETERS ---
 
-# Load the config file
-# config_file = "config.json"
-# try:
-#     with open(config_file, "r") as config_file:
-#         config = json.load(config_file)
-# except:
-#     print(f"{config_file} not found.")
-#     exit()
+#Load the config file
+config_file = "../config.json"
+
+try:
+    with open(config_file, "r") as f:
+        config = json.load(f)
+except:
+    print(f"{config_file} not found.")
+    exit()
 
 EE_OFFSET = 0
 
@@ -44,6 +46,8 @@ DH_PARAMETERS = {
             "alpha": 0
         }
     }
+
+f.close()
 
 # --- FORWARD KINEMATICS ---
 

@@ -79,29 +79,29 @@ class RobotArm:
             },                                
         }
 
-        # Search for servo IDs and store them in a list
-        self.activeServos = self._getActiveServos()
-
-        # Initialize kinematics
-        self.current_tf = self.computeFK()
-
-        # Initialize check properties
-        self.move_complete = True
+        
+        self.activeServos = self._getActiveServos()     # Search for servo IDs and store them in a list
+        self.current_tf = self.computeFK()              # Initialize kinematics
+        self.move_complete = True                       # Initialize check properties
 
         # Wait a couple of seconds for all operations to complete
-        print("Robot initialized successfully")
+        print("Robot initialized successfully. Moving to HOME position.")
+
+        self.home()     # Home the robot
 
 
     ''' INTERNAL METHODS '''
 
     def _load_config(self):
-        ''' Load configuration settings from a config.json file, and initialize them as properties for the class. '''
+        '''
+        Load configuration settings from a config.json file, and initialize them as properties for the class.
+        '''
 
         # Load the config file
         config_file = "config.json"
         try:
-            with open(config_file, "r") as config_file:
-                config = json.load(config_file)
+            with open(config_file, "r") as f:
+                config = json.load(f)
         except:
             print(f"{config_file} not found.")
             exit()
@@ -126,11 +126,13 @@ class RobotArm:
         self.HOME = config["defined_positions"]["home"]     # A list of angles in degrees
 
         # Close file when finished
-        config_file.close()
+        f.close()
 
 
     def _startConnection(self):
-        ''' Begin serial communication with the robot. Ensure that the robot's "serial forwarding" setting is turned on. '''
+        '''
+        Begin serial communication with the robot. Ensure that the robot's "serial forwarding" setting is turned on.
+        '''
 
         # Create an instance of the PortHandler object, which is basically the connection object.
         portHandler = PortHandler(self.DEVICE)
@@ -152,25 +154,33 @@ class RobotArm:
     
 
     def _getActiveServos(self):
+        '''
+        Searches through all IDs from 0 to max_id for connected servo motors, and adds them to the class property joint_info.
+        
+        Returns a list of the IDs.
+        '''
         activeServos = []
         joint_idx = 1
         for id in range(self.MAX_ID):
             sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
             if sts_comm_result == 0:
-                activeServos.append(id)
-                self.joint_info[joint_idx]["servo_id"] = id
-                joint_idx += 1
                 print(f"Found active servo. ID: {id}.")
+                activeServos.append(id)                         # Add servo ID to temporary list
+                self.joint_info[joint_idx]["servo_id"] = id     # Add servo ID to joint_info dictionary
+
+                joint_idx += 1
         
         return activeServos
 
 
     def _angleToServoPos(self, angle:float, unit:str="deg"):
         '''
-        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value. By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.\n
+        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value. By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        
         Returns a servo position value from min_pos to max_pos.
         '''
 
+        # Normalize servo position values around the midpoint
         match unit:
             case "deg":
                 pos_change = (angle / 180.0) * self.CENTER_POS
@@ -189,7 +199,8 @@ class RobotArm:
 
     def _servoPosToAngle(self, servo_pos:float, unit:str="deg"):
         '''
-        Converts an servo position value to an angle.\n
+        Converts an servo position value to an angle.
+
         Returns an angle in degrees by default, but you can specify "rad" to change it to radians.
         '''
         match unit:
@@ -204,7 +215,8 @@ class RobotArm:
     ''' UTILITY METHODS '''
 
     def ping(self, id:int):
-        ''' Ping one or multiple servos.
+        '''
+        Ping one or multiple servos.
         
         Pass an id integer from 1 to MAX_ID to ping a particular servo.
         Passing an id of 0 will ping all servos.
@@ -226,10 +238,6 @@ class RobotArm:
 
         if single_success == False:
             print(f"No motors were found.")
-
-
-    def setID(self, current_id:int, new_id:int):
-        self.packetHandler.SetID(current_id, new_id)
 
 
     ''' READ METHODS '''
@@ -261,6 +269,13 @@ class RobotArm:
             
 
     def readJointAngle(self, id:int):
+        '''
+        Reads joint angles in radians to be usable by other methods, and prints out the angles in degrees.
+        
+        Takes a servo ID as an argument, and passing 0 will read all servo angles.
+
+        TODO: Clean up variable names and logic. Try to use list comprehension.
+        '''
         match id:
             case 0:
                 joint_angles = []
@@ -290,6 +305,11 @@ class RobotArm:
 
 
     def contReadJointAngle(self, id:int):
+        '''
+        Continuously print out the joint angles in degrees.
+        
+        Takes a joint ID as an argument, and passing 0 will read all joints.
+        '''
         while(True):
             self.readJointAngle(id)
 
@@ -319,7 +339,8 @@ class RobotArm:
 
 
     def writeServoPos(self, id:int, pos: int):
-        ''' Write position to a servo, and it will run at the default speed and acceleration.
+        '''
+        Write position to a servo, and it will run at the default speed and acceleration.
         
         Pass an id integer from 1 to MAX_ID to write a position to a particular servo.
         Passing an id of 0 will write to all servos.
@@ -361,7 +382,9 @@ class RobotArm:
 
 
     def writeAngle(self, id:int, angle:float):
-        ''' Write an angle to a servo or all servos. The input angle is in degrees.'''
+        '''
+        Write an angle to a servo or all servos. The input angle is in degrees.
+        '''
 
         servo_pos = int(self._angleToServoPos(angle))
 
@@ -425,7 +448,8 @@ class RobotArm:
     ''' Kinematics '''
     def computeFK(self):
         '''
-        Compute the forward kinematics by reading the current joint angles.\n
+        Compute the forward kinematics by reading the current joint angles.
+        
         Returns a 4x4 matrix that represents the rotation and position of the end effector.
         '''
         self.readJointAngle(0)
@@ -442,6 +466,7 @@ class RobotArm:
     def getEEPos(self):
         '''
         Get the end effector's position in Cartesian coordinates relative to the base frame.
+        
         Returns a 3x1 position vector.
         '''
         fk_mat = self.computeFK()
@@ -453,6 +478,7 @@ class RobotArm:
     def getEERot(self):
         '''
         Get the end effector's rotation matrix relative to the base frame.
+        
         Returns a 3x3 rotation matrix.
         '''
         fk_mat = self.computeFK()
@@ -464,6 +490,7 @@ class RobotArm:
     def computeIKFromPosition(self, pos_vec:list):
         '''
         Compute the inverse kinematics given a position vector [x, y, z].\n
+        
         Returns a list of joint angles.
         '''
         current_frame = self.computeFK()
@@ -490,7 +517,8 @@ class RobotArm:
     
     def moveX(self, x, delay=None):
         '''
-        Linear move in the x direction.\n
+        Linear move in the x direction.
+        
         Pass an argument for the distance to move in mm.
         '''
         if delay==None:
@@ -505,7 +533,8 @@ class RobotArm:
 
     def moveY(self, y, delay=None):
         '''
-        Linear move in the y direction.\n
+        Linear move in the y direction.
+        
         Pass an argument for the distance to move in mm.
         '''
         if delay==None:
@@ -520,7 +549,8 @@ class RobotArm:
 
     def moveZ(self, z, delay=None):
         '''
-        Linear move in the z direction.\n
+        Linear move in the z direction.
+        
         Pass an argument for the distance to move in mm.        
         '''
         if delay==None:
