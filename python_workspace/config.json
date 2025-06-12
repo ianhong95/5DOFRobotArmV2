@@ -16,26 +16,31 @@
     "DH_params": {
         "joint_1": {
             "d": 29.96,
+            "theta_offset": 3.141592654,
             "a": 0,
             "alpha": 1.57079632679
         },
         "joint_2": {
             "d": 0,
+            "theta_offset": 1.57079632679,
             "a": 180.0,
             "alpha": 0
         },
         "joint_3": {
             "d": 0,
+            "theta_offset": 0,
             "a": 160.0,
             "alpha": 0
         },
         "joint_4": {
             "d": 0,
+            "theta_offset": 1.57079632679,
             "a": 0,
             "alpha": 1.57079632679
         },
         "joint_5":  {
             "d": 72.2,
+            "theta_offset": 0,
             "a": 0,
             "alpha": 0
         }
