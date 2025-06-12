@@ -21,7 +21,7 @@ import numpy as np
 
 # Custom library imports
 from scservo_sdk import *   # Uses SC Servo SDK library
-from kinematics import Kinematics as k
+from kinematics import Kinematics
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -30,6 +30,9 @@ logging.basicConfig(filename="api_logs.log", level=logging.INFO)
 
 class RobotArm:
     def __init__(self):
+        # Load kinematics library class
+        self.k = Kinematics()
+
         # Set up connection to robot
         self._load_config()
         self.conn = self._startConnection()
@@ -456,7 +459,7 @@ class RobotArm:
 
         joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
-        FK = k.get_FK_mat(joint_angles)
+        FK = self.k.get_FK_mat(joint_angles)
 
         print(f"FK: {FK}")
 
@@ -494,16 +497,16 @@ class RobotArm:
         Returns a list of joint angles.
         """
         current_frame = self.computeFK()
-        target_frame = k.tf_from_position(pos_vec, current_frame)
+        target_frame = self.k.tf_from_position(pos_vec, current_frame)
         
-        target_joint_angles = k.calcAllJointAngles(target_frame)
+        target_joint_angles = self.k.calcAllJointAngles(target_frame)
 
         return target_joint_angles
 
 
     def getJointAnglesFromTF(self):
         fk = self.computeFK()
-        joint_angles = k.calc_joint_angles(fk)
+        joint_angles = self.k.calc_joint_angles(fk)
 
         deg_angles = [angle for angle in joint_angles]
 
