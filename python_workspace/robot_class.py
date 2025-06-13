@@ -29,14 +29,35 @@ logging.basicConfig(filename="api_logs.log", level=logging.INFO)
 
 
 class RobotArm:
+    """Robot arm class for scripting motions.
+
+    Attributes
+    ----------
+    joint_info: Dictionary of joint properties such as ID, angle, speed, etc.
+
+    current_tf: Numpy array of the transformation matrix for the end effector's current pose.
+    
+    Methods
+    -------
+    ping(id): Ping a servo by ID.
+
+    home(): Move the robot to the "home" position defined in the config.json.
+
+    moveX(x): Move a distance x along the global x axis relative to the current position.
+
+    moveY(y): Move a distance y along the global y axis relative to the current position.
+
+    moveZ(z): Move a distance z along the global z axis relative to the current position.
+    """
+
     def __init__(self):
         # Load kinematics library class
-        self.k = Kinematics()
+        self._k = Kinematics()
 
         # Set up connection to robot
         self._load_config()
-        self.conn = self._startConnection()
-        self.packetHandler = sms_sts(self.conn)
+        self._conn = self._startConnection()
+        self._packetHandler = sms_sts(self._conn)
 
         # Initialize joint info dictionary
         self.joint_info = {
@@ -83,20 +104,22 @@ class RobotArm:
         }
 
         
-        self.activeServos = self._getActiveServos()     # Search for servo IDs and store them in a list
-        self.current_tf = self.computeFK()              # Initialize kinematics
-        self.move_complete = True                       # Initialize check properties
+        self._activeServos = self._getActiveServos()     # Search for servo IDs and store them in a list
+        self.current_tf = self.computeFK()               # Initialize kinematics
+        self._move_complete = True                       # Initialize check properties
 
         # Wait a couple of seconds for all operations to complete
         print("Robot initialized successfully. Moving to HOME position.")
 
         self.home()     # Home the robot
 
-
-    """ INTERNAL METHODS """
+    # =================
+    # INTERNAL METHODS
+    # =================
 
     def _load_config(self):
-        """
+        """Set up class using configuration parameters.
+        
         Load configuration settings from a config.json file, and initialize them as properties for the class.
         """
 
@@ -110,17 +133,17 @@ class RobotArm:
             exit()
 
         # Load serial connection settings
-        self.BAUDRATE = config["serial_settings"]["baudrate"]
-        self.DEVICE = config["serial_settings"]["device"]
+        self._BAUDRATE = config["serial_settings"]["baudrate"]
+        self._DEVICE = config["serial_settings"]["device"]
 
         # Load servo settings
-        self.MAX_ID = config["servo_params"]["max_id"]
+        self._MAX_ID = config["servo_params"]["max_id"]
         self.SPEED = config["servo_params"]["default_speed"]
         self.ACCEL = config["servo_params"]["default_accel"]
         self.MIN_POS = config["servo_params"]["min_pos"]
         self.MAX_POS = config["servo_params"]["max_pos"]
         self.CENTER_POS = config["servo_params"]["center_pos"]
-        self.DEADBAND = config["servo_params"]["deadband"]
+        self._DEADBAND = config["servo_params"]["deadband"]
 
         # Load running parameters
         self.MOVE_DELAY = config["run_params"]["move_delay"]
@@ -131,41 +154,48 @@ class RobotArm:
         # Close file when finished
         f.close()
 
-
     def _startConnection(self):
-        """
-        Begin serial communication with the robot. Ensure that the robot's "serial forwarding" setting is turned on.
+        """Begin serial communication with the robot.
+        
+        Serial communication parameters are defined in config.json. Ensure that the robot's "serial forwarding" setting is turned on.
+
+        Returns
+        -------
+        The PortHandler object.
         """
 
         # Create an instance of the PortHandler object, which is basically the connection object.
-        portHandler = PortHandler(self.DEVICE)
+        portHandler = PortHandler(self._DEVICE)
 
         if portHandler.openPort():
-            print(f"Port opened successfully: {self.DEVICE}")
+            print(f"Port opened successfully: {self._DEVICE}")
 
         else:
             print("Failed to open the port")
             exit()
         
-        if portHandler.setBaudRate(self.BAUDRATE):
-            print(f"Baudrate set to {self.BAUDRATE} successfully")
+        if portHandler.setBaudRate(self._BAUDRATE):
+            print(f"Baudrate set to {self._BAUDRATE} successfully")
         else:
             print("Failed to change the baudrate")
             exit()
 
         return portHandler
     
-
     def _getActiveServos(self):
-        """
+        """Fetches active servo IDs.
+
         Searches through all IDs from 0 to max_id for connected servo motors, and adds them to the class property joint_info.
         
-        Returns a list of the IDs.
+        Returns
+        -------
+        A list of active servo IDs.
         """
+
         activeServos = []
         joint_idx = 1
-        for id in range(self.MAX_ID):
-            sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+        for id in range(self._MAX_ID):
+            sts_model_number, sts_comm_result, sts_error = self._packetHandler.ping(id)
             if sts_comm_result == 0:
                 print(f"Found active servo. ID: {id}.")
                 activeServos.append(id)                         # Add servo ID to temporary list
@@ -175,12 +205,20 @@ class RobotArm:
         
         return activeServos
 
-
     def _angleToServoPos(self, angle:float, unit:str="deg"):
-        """
-        Converts an input angle (from -180 degrees to 180 degrees) to a servo position value. By default, the input angle is assumed to be in degrees, but you can specify "rad" to change it to radians.
+        """Converts an input angle to a servo position value.
         
-        Returns a servo position value from min_pos to max_pos.
+        Args
+        ----
+        angle: float
+            An angle between -180 deg and 180 deg or -pi and pi.
+
+        unit: str
+            The unit of the angles. Set to degrees by default.
+
+        Returns
+        -------
+        A servo position value.
         """
 
         # Normalize servo position values around the midpoint
@@ -192,19 +230,24 @@ class RobotArm:
             case _:
                 print("Invalid unit.")
 
-        if angle >= 0:
-            pos = self.CENTER_POS + pos_change
-        elif angle < 0:
-            pos = self.CENTER_POS + pos_change
+        pos = self.CENTER_POS + pos_change  # Handles both positive and negative input angles.
 
         return int(pos)
             
+    def _servoPosToAngle(self, servo_pos:int, unit:str="deg"):
+        """Converts an servo position to an angle.
+        
+        Args
+        ----
+        servo_pos: int
+            An integer servo position value between the min and max specified in the config.json.
 
-    def _servoPosToAngle(self, servo_pos:float, unit:str="deg"):
-        """
-        Converts an servo position value to an angle.
+        unit: str
+            The unit of the output angle. Set to degrees by default.
 
-        Returns an angle in degrees by default, but you can specify "rad" to change it to radians.
+        Returns
+        -------
+        An angle value.
         """
         match unit:
             case "deg":
@@ -214,27 +257,30 @@ class RobotArm:
             case _:
                 print("Invalid unit.")
         
-
-    """ UTILITY METHODS """
+    # ===============
+    # UTILITY METHODS
+    # ===============
 
     def ping(self, id:int):
+        """Ping one or multiple servos.
+
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to _MAX_ID to ping a particular servo. Passing and ID of 0 will ping all servos.
         """
-        Ping one or multiple servos.
-        
-        Pass an id integer from 1 to MAX_ID to ping a particular servo.
-        Passing an id of 0 will ping all servos.
-        """
+
         single_success = False
 
         match id:
             case 0:
-                for id in self.activeServos:
-                    sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+                for id in self._activeServos:
+                    sts_model_number, sts_comm_result, sts_error = self._packetHandler.ping(id)
                     if sts_comm_result == 0:
                         print(f"[ID:{id}] ping succeeded. STServo model number: {sts_model_number}")
                         single_success = True
             case _:
-                sts_model_number, sts_comm_result, sts_error = self.packetHandler.ping(id)
+                sts_model_number, sts_comm_result, sts_error = self._packetHandler.ping(id)
                 if sts_comm_result == 0:
                     print(f"[ID:{id}] ping succeeded. STServo model number: {sts_model_number}")
                     single_success = True
@@ -242,40 +288,47 @@ class RobotArm:
         if single_success == False:
             print(f"No motors were found.")
 
+    # ============
+    # READ METHODS
+    # ============
 
-    """ READ METHODS """
+    def _readServoPos(self, id:int):
+        """Read the position of one or multiple servos.
 
-    def readServoPos(self, id:int):
-        """
-        Read the position of one or multiple servos.
-        
-        Pass an id integer from 1 to MAX_ID to read the position of a particular servo.
-        Passing an id of 0 will read the positions of all servos.
+        This method updates the servo_pos entries in the class attribute joint_info.
+
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to _MAX_ID to read the position of a particular servo. Passing an id of 0 will read the positions of all servos.
         """
 
         match id:
             case 0:
                 joint_idx = 1
-                for id in self.activeServos:
-                    sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                for id in self._activeServos:
+                    sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
                     if sts_comm_result == 0:
                         self.joint_info[joint_idx]["servo_pos"] = sts_current_position
                         print(f"Servo [ID {id}] position: {sts_current_position}")
                     else:
                         print(f"Error reading servo with ID {id}: {sts_error}")
             case _:
-                sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
                 if sts_comm_result == 0:
                     print(f"Servo [ID {id}] position: {sts_current_position}")
                 else:
                     print(f"Error reading servo with ID {id}: {sts_error}")
             
-
     def readJointAngle(self, id:int):
-        """
-        Reads joint angles in radians to be usable by other methods, and prints out the angles in degrees.
+        """Reads joint angles in radians to be usable by other methods, and prints out the angles in degrees.
+
+        This method updates the angle entries in the class attribute joint_info.
         
-        Takes a servo ID as an argument, and passing 0 will read all servo angles.
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to 5 to read the angle of a particular joint. Passing an id of 0 will read the positions of all joints.
 
         TODO: Clean up variable names and logic. Try to use list comprehension.
         """
@@ -283,8 +336,8 @@ class RobotArm:
             case 0:
                 joint_angles = []
                 joint_idx = 1
-                for id in self.activeServos:
-                    sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                for id in self._activeServos:
+                    sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
                     if sts_comm_result == 0:
                         self.joint_info[joint_idx]["servo_pos"] = sts_current_position
                         angle = round(self._servoPosToAngle(sts_current_position, "rad"), 5)
@@ -295,7 +348,7 @@ class RobotArm:
 
                 print([degrees(joint_angle) for joint_angle in joint_angles])
             case _:
-                sts_current_position, sts_comm_result, sts_error = self.packetHandler.ReadPos(id)
+                sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
                 if sts_comm_result == 0:
 
                     for i, key in enumerate(self.joint_info):
@@ -305,88 +358,119 @@ class RobotArm:
                             self.joint_info[key]["angle"] = angle
                             print(f"Servo [ID {id}] angle: {angle}")
 
-
-
     def contReadJointAngle(self, id:int):
-        """
-        Continuously print out the joint angles in degrees.
+        """Continuously print out the joint angles in degrees.
         
-        Takes a joint ID as an argument, and passing 0 will read all joints.
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to 5 to read the angle of a particular joint. Passing an id of 0 will read the positions of all joints.
         """
         while(True):
             self.readJointAngle(id)
 
-
     def checkIfMoving(self):
-        """
-        Blocks execution of code until the move_complete flag is set to True.
+        """Check if robot is moving.
+
+        Blocks execution of code until the _move_complete flag is set to True.
         """
 
-        while self.move_complete==False:
+        while self._move_complete==False:
             moving_checks = [None, None, None, None, None]
 
-            for idx, servo_id in enumerate(self.activeServos):
-                is_moving, sts_comm_result, sts_error = self.packetHandler.ReadMoving(servo_id)
+            for idx, servo_id in enumerate(self._activeServos):
+                is_moving, sts_comm_result, sts_error = self._packetHandler.ReadMoving(servo_id)
                 moving_checks[idx] = is_moving
             if 1 in moving_checks:
-                self.move_complete = False
+                self._move_complete = False
             else:
-                self.move_complete = True
+                self._move_complete = True
                 print(f"movement complete")
                     
-
-    """ MANUAL SERVO CONTROL METHODS """
+    # ======================
+    # MANUAL CONTROL METHODS
+    # ======================
 
     def disableServo(self, id:int):
+        """Disable a servo or all servo.
+        
+        TODO: Before implementing this method, the packet info must be able to read the "enable" setting.
+        """
         pass
 
-
     def writeServoPos(self, id:int, pos: int):
-        """
-        Write position to a servo, and it will run at the default speed and acceleration.
+        """Write position to a servo.
         
-        Pass an id integer from 1 to MAX_ID to write a position to a particular servo.
-        Passing an id of 0 will write to all servos.
+        The servo will move to the position specified, and it will run at the default speed and acceleration.
+        
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to _MAX_ID to write a position to a particular servo. Passing an id of 0 will write to all servos.
+
+        pos: int
+            The target servo position value (absolute).
         """
 
         match id:
             case 0:
-                for id in self.activeServos:
-                    sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                for id in self._activeServos:
+                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
                     if sts_comm_result == 0:
                         print(f"Servo [ID {id}] new position: {pos}")
                     else:
                         print(f"Error writing to servo with ID {id}: {sts_error}.")
             case _:
-                sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
                 if sts_comm_result == 0:
                     print(f"Servo [ID {id}] new position: {pos}")
                 else:
                     print(f"Error writing to servo with ID {id}: {sts_error}.")
 
-
     def syncWriteServoPos(self, id_list:list, pos_list:list, speed_list:list=None, accel_list:list=None):
-        """
-        I don't really know what the low level function does.
+        """I don't really know what the low level function does.
 
-        TODO: Add individual servo speed/accel control.
+        Some form of writing servo position. Maybe writing to all servos at once?
+
+        Args
+        ----
+        id_list: list
+            A list of servo IDs corresponding to each joint, ordered the same as the joint order.
+
+        pos_list: list
+            A list of servo position values to target, ordered the same as the joint order.
+
+        speed_list: list
+            A list of speed values, ordered the same as the joint order.
+
+        accel_list:list
+            A list of acceleration values, ordered the same as the joint order.
+
+        TODO: Add individual servo speed/accel control. Try to understand what's going on in the low level function.
         """
 
         for (id, servo_pos) in zip(id_list, pos_list):
             # Add parameters to memory
-            sts_addparam_result = self.packetHandler.SyncWritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+            sts_addparam_result = self._packetHandler.SyncWritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
 
             # Write the parameters that were in memory
-            sts_comm_result = self.packetHandler.groupSyncWrite.txPacket()
+            sts_comm_result = self._packetHandler.groupSyncWrite.txPacket()
 
             # Clear memory
-            self.packetHandler.groupSyncWrite.clearParam()
-
-
+            self._packetHandler.groupSyncWrite.clearParam()
 
     def writeAngle(self, id:int, angle:float):
-        """
-        Write an angle to a servo or all servos. The input angle is in degrees.
+        """Write an angle to a servo or all servos.
+
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to _MAX_ID to write an angle to a particular servo. Passing an id of 0 will write to all servos.
+
+        angle: float
+            Target angle in degrees.
+
+        TODO: Decide if support for radians is necessary for this method.
         """
 
         servo_pos = int(self._angleToServoPos(angle))
@@ -394,8 +478,8 @@ class RobotArm:
         match id:
             case 0:
                 print(f"case 0")
-                for id in self.activeServos:
-                    sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                for id in self._activeServos:
+                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
                     if sts_comm_result == 0:
                         print(f"Servo [ID {id}] new angle: {angle}")
                         print(f"Servo [ID {id}] new position: {servo_pos}")
@@ -403,16 +487,19 @@ class RobotArm:
                         print(f"Error writing to servo with ID {id}: {sts_error}.")
             case _:
                 print(f"case _")
-                sts_comm_result, sts_error = self.packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
                 if sts_comm_result == 0:
                     print(f"Servo [ID {id}] new position: {servo_pos}")
                 else:
                     print(f"Error writing to servo with ID {id}: {sts_error}.")
 
-
     def writeAllAngles(self, angles:list):
-        """
-        Writes angles to all servos. Takes a list of angles (radians) as an argument.
+        """Writes angles to all servos. 
+        
+        Args
+        ----
+        angles:list
+            A list of angles in radians.
         """
 
         # servo_positions = list(map(lambda angle: self._angleToServoPos(angle, "rad"), angles))
@@ -423,11 +510,18 @@ class RobotArm:
             self.writeServoPos(joint["servo_id"], servo_positions[idx])
             idx += 1
 
-
     def syncWriteAngles(self, angles:list):
+        """Sync write angles.
+
+        Checks that all joints have stopped moving, then writes new target angles to them. Converts the input angles to servo positions
+        then passes them to the syncWriteServoPos() method.
+
+        Args
+        ----
+        angles:list
+            A list of target angles.
         """
-        Sync write?
-        """
+
         self.checkIfMoving()
 
         servo_positions = [self._angleToServoPos(angle, "rad") for angle in angles]
@@ -435,55 +529,72 @@ class RobotArm:
 
         self.syncWriteServoPos(ids, servo_positions)
 
-        self.move_complete = False
-
+        self._move_complete = False
 
     def setSpeed(self, speed:int):
-        """
-        Globally sets the speed. I don't think this is very useful right now.
-        """
+        """Globally sets the speed. I don't think this is very useful right now."""
 
     
     def readEnableSetting(self, id:int):
-        print(self.packetHandler.readEnable(id))
+        """Checks if the motor is enabled.
 
-
-    """ Kinematics """
-    def computeFK(self):
-        """
-        Compute the forward kinematics by reading the current joint angles.
+        Updates the joint_info attribute.
         
-        Returns a 4x4 matrix that represents the rotation and position of the end effector.
+        Args
+        ----
+        id: int
+            Pass an integer ID from 1 to _MAX_ID to check a particular servo. Passing an id of 0 will read from all servos.
+
+        TODO: Implement an all servos call.
         """
+
+        enabled = self._packetHandler.readEnable(id)
+
+        return enabled
+
+    # ===========
+    # KINEMATICS
+    # ===========
+
+    def computeFK(self):
+        """Calculate the transformation matrix of the current end effector pose.
+        
+        Returns
+        -------
+        A numpy array for the 4x4 matrix that represents the rotation and position of the end effector.
+        """
+
         self.readJointAngle(0)
 
         joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
-        FK = self.k.get_FK_mat(joint_angles)
+        FK = self._k.get_FK_mat(joint_angles)
 
-        print(f"FK: {FK}")
+        print(f"FK: {FK}")  # Debug
 
         return FK
     
-
     def getEEPos(self):
-        """
-        Get the end effector's position in Cartesian coordinates relative to the base frame.
+        """ Get the end effector's position in Cartesian coordinates relative to the base frame.
         
-        Returns a 3x1 position vector.
+        Returns
+        -------
+        A numpy array for the 3x1 position vector.
         """
+
         fk_mat = self.computeFK()
         pos_vec = fk_mat[:3, 3].transpose()
 
         return pos_vec
 
-
     def getEERot(self):
-        """
-        Get the end effector's rotation matrix relative to the base frame.
+        """Get the end effector's rotation matrix relative to the base frame.
         
-        Returns a 3x3 rotation matrix.
+        Returns
+        -------
+        A numpy array for the 3x3 rotation matrix.
         """
+
         fk_mat = self.computeFK()
         rot_mat = fk_mat[:3,:3]
 
@@ -491,39 +602,60 @@ class RobotArm:
 
 
     def computeIKFromPosition(self, pos_vec:list):
-        """
-        Compute the inverse kinematics given a position vector [x, y, z].\n
+        """Compute the target joint angles given a target position vector [x, y, z].
         
-        Returns a list of joint angles.
+        Args
+        ----
+        pos_vec: list
+            A list of Cartesian coordinates (x, y, z) relative to the global origin.
+
+        Returns
+        -------
+        A list of joint angles in radians.
         """
+
         current_frame = self.computeFK()
-        target_frame = self.k.tf_from_position(pos_vec, current_frame)
+        target_frame = self._k.tf_from_position(pos_vec, current_frame)
         
-        target_joint_angles = self.k.calcAllJointAngles(target_frame)
+        target_joint_angles = self._k.calcAllJointAngles(target_frame)
 
         return target_joint_angles
 
 
     def getJointAnglesFromTF(self):
+        """Get the joint angles from the end effector's transformation matrix.
+
+        Returns
+        -------
+        a list of angles in degrees.
+        
+        NOTE: Is this method even useful?
+        """
         fk = self.computeFK()
-        joint_angles = self.k.calc_joint_angles(fk)
+        joint_angles = self._k.calc_joint_angles(fk)
 
         deg_angles = [angle for angle in joint_angles]
 
-        print(deg_angles)
+        return deg_angles
 
-
-    """
-    BASIC MOTIONS
-    
-    """
+    # =============
+    # BASIC MOTIONS
+    # =============
     
     def moveX(self, x, delay=None):
-        """
-        Linear move in the x direction.
+        """Linear move in the x direction.
         
-        Pass an argument for the distance to move in mm.
+        Args
+        ----
+        x: float
+            A distance in mm along the global x axis.
+
+        delay: float
+            Delay in ms after the move completes.
+
+        TODO: Properly implement the delay in the library.
         """
+
         if delay==None:
             delay = self.MOVE_DELAY
 
@@ -538,8 +670,17 @@ class RobotArm:
         """
         Linear move in the y direction.
         
-        Pass an argument for the distance to move in mm.
+        Args
+        ----
+        y: float
+            A distance in mm along the global y axis.
+
+        delay: float
+            Delay in ms after the move completes.
+
+        TODO: Properly implement the delay in the library.
         """
+
         if delay==None:
             delay = self.MOVE_DELAY
 
@@ -551,11 +692,19 @@ class RobotArm:
     
 
     def moveZ(self, z, delay=None):
-        """
-        Linear move in the z direction.
+        """Linear move in the z direction.
         
-        Pass an argument for the distance to move in mm.        
+        Args
+        ----
+        x: float
+            A distance in mm along the global z axis.
+
+        delay: float
+            Delay in ms after the move completes.
+
+        TODO: Properly implement the delay in the library.    
         """
+
         if delay==None:
             delay = self.MOVE_DELAY
 
@@ -567,8 +716,16 @@ class RobotArm:
     
 
     def home(self, delay=None):
-        """
-        Go to the home position defined in config.json. This method sets a manual target angle to each servo.
+        """Go to the home position defined in config.json.
+        
+        This method sets a manual target angle to each servo, so the arm must be calibrated beforehand.
+        
+        Args
+        ----
+        delay: float
+            Delay in ms after the move completes.
+
+        TODO: Properly implement the delay in the library.
         """
 
         if delay==None:
