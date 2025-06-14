@@ -50,5 +50,27 @@
     },
     "run_params": {
         "move_delay": 1
+    },
+    "joint_limits": {
+        "joint_1": {
+            "min_angle": -90,
+            "max_angle": 90
+        },
+        "joint_2": {
+            "min_angle": -45,
+            "max_angle": 75
+        },
+        "joint_3": {
+            "min_angle": -30,
+            "max_angle": 135
+        },
+        "joint_4": {
+            "min_angle": -30,
+            "max_angle": 100
+        },
+        "joint_5": {
+            "min_angle": -90,
+            "max_angle": 90
+        }                                
     }
 }
