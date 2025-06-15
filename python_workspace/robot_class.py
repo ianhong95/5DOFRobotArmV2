@@ -52,59 +52,17 @@ class RobotArm:
 
     def __init__(self):
         # Load kinematics library class
-        self._k = Kinematics()
+        self._k = Kinematics("config.json")
 
         # Set up connection to robot
         self._load_config()
         self._conn = self._start_connection()
         self._packetHandler = sms_sts(self._conn)
 
-        # Initialize joint info dictionary
-        self.joint_info = {
-            1: {
-                "servo_id": 0,
-                "servo_pos": 0,
-                "angle": 0,
-                "speed": self.SPEED,
-                "accel": self.ACCEL,
-                "enabled": 0
-            },
-            2: {
-                "servo_id": 0,
-                "servo_pos": 0,
-                "angle": 0,
-                "speed": self.SPEED,
-                "accel": self.ACCEL,
-                "enabled": 0
-            },
-            3: {
-                "servo_id": 0,
-                "servo_pos": 0,
-                "angle": 0,
-                "speed": self.SPEED,
-                "accel": self.ACCEL,
-                "enabled": 0
-            },
-            4: {
-                "servo_id": 0,
-                "servo_pos": 0,
-                "angle": 0,
-                "speed": self.SPEED+250,
-                "accel": self.ACCEL,
-                "enabled": 0
-            },
-            5: {
-                "servo_id": 0,
-                "servo_pos": 0,
-                "angle": 0,
-                "speed": self.SPEED+500,
-                "accel": self.ACCEL,
-                "enabled": 0
-            },                                
-        }
-
         self._activeServos = self._get_active_servos()     # Search for servo IDs and store them in a list
+        
         self.current_tf = self.compute_fk()               # Initialize kinematics
+
         self._move_complete = True                       # Initialize check properties
 
         # Wait a couple of seconds for all operations to complete
@@ -119,7 +77,8 @@ class RobotArm:
     def _load_config(self):
         """Set up class using configuration parameters.
         
-        Load configuration settings from a config.json file, and initialize them as properties for the class.
+        Load configuration settings from a config.json file, and initialize them as properties for the class. This method
+        also initializes the joint_info dictionary.
         """
 
         # Load the config file
@@ -137,30 +96,78 @@ class RobotArm:
 
         # Load servo settings
         self._MAX_ID = config["servo_params"]["max_id"]
-        self.SPEED = config["servo_params"]["default_speed"]
-        self.ACCEL = config["servo_params"]["default_accel"]
+        self.speed = config["servo_params"]["default_speed"]
+        self.accel = config["servo_params"]["default_accel"]
         self.MIN_POS = config["servo_params"]["min_pos"]
         self.MAX_POS = config["servo_params"]["max_pos"]
         self.CENTER_POS = config["servo_params"]["center_pos"]
         self._DEADBAND = config["servo_params"]["deadband"]
 
-        # Load joint angle limits, convert to radians for calculations
-        self.JOINT_1_MIN = radians(config["joint_limits"]["joint_1"]["min_angle"])
-        self.JOINT_1_MAX = radians(config["joint_limits"]["joint_1"]["max_angle"])
-        self.JOINT_2_MIN = radians(config["joint_limits"]["joint_2"]["min_angle"])
-        self.JOINT_2_MAX = radians(config["joint_limits"]["joint_2"]["max_angle"])
-        self.JOINT_3_MIN = radians(config["joint_limits"]["joint_3"]["min_angle"])
-        self.JOINT_3_MAX = radians(config["joint_limits"]["joint_3"]["max_angle"])
-        self.JOINT_4_MIN = radians(config["joint_limits"]["joint_4"]["min_angle"])
-        self.JOINT_4_MAX = radians(config["joint_limits"]["joint_4"]["max_angle"])
-        self.JOINT_5_MIN = radians(config["joint_limits"]["joint_5"]["min_angle"])
-        self.JOINT_5_MAX = radians(config["joint_limits"]["joint_5"]["max_angle"])
+        # Initialize joint info dictionary
+        self.joint_info = {
+            1: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.speed,
+                "accel": self.accel,
+                "min_angle": radians(config["joint_limits"]["joint_1"]["min_angle"]),
+                "max_angle": radians(config["joint_limits"]["joint_1"]["max_angle"]),
+                "enabled": 0
+            },
+            2: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.speed,
+                "accel": self.accel,
+                "min_angle": radians(config["joint_limits"]["joint_2"]["min_angle"]),
+                "max_angle": radians(config["joint_limits"]["joint_2"]["max_angle"]),                
+                "enabled": 0
+            },
+            3: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.speed,
+                "accel": self.accel,
+                "min_angle": radians(config["joint_limits"]["joint_3"]["min_angle"]),
+                "max_angle": radians(config["joint_limits"]["joint_3"]["max_angle"]),                
+                "enabled": 0
+            },
+            4: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.speed+250,
+                "accel": self.accel,
+                "min_angle": radians(config["joint_limits"]["joint_4"]["min_angle"]),
+                "max_angle": radians(config["joint_limits"]["joint_4"]["max_angle"]),                
+                "enabled": 0
+            },
+            5: {
+                "servo_id": 0,
+                "servo_pos": 0,
+                "angle": 0,
+                "speed": self.speed+500,
+                "accel": self.accel,
+                "min_angle": radians(config["joint_limits"]["joint_5"]["min_angle"]),
+                "max_angle": radians(config["joint_limits"]["joint_5"]["max_angle"]),                
+                "enabled": 0
+            },                                
+        }
 
         # Load running parameters
         self.MOVE_DELAY = config["run_params"]["move_delay"]
 
         # Load pre-defined positions
-        self.HOME = config["defined_positions"]["home"]     # A list of angles in degrees
+        self.saved_positions = {
+            "HOME": {
+                "joint_angles": config["defined_positions"]["home"],     # A list of angles in degrees
+                "ee_position": [],
+                "ee_orientation": []
+            }
+        }
 
         # Close file when finished
         f.close()
@@ -213,6 +220,10 @@ class RobotArm:
                 self.joint_info[joint_idx]["servo_id"] = id     # Add servo ID to joint_info dictionary
 
                 joint_idx += 1
+
+        if len(activeServos) < 5:
+            print("Not enough servos found. Could not initialize robot.")
+            exit()
         
         return activeServos
 
@@ -341,6 +352,10 @@ class RobotArm:
         id: int
             Pass an integer ID from 1 to 5 to read the angle of a particular joint. Passing an id of 0 will read the positions of all joints.
 
+        Returns
+        -------
+        Either a list of 5 angles or a single angle as a float.
+
         TODO: Clean up variable names and logic. Try to use list comprehension.
         """
         match id:
@@ -358,16 +373,19 @@ class RobotArm:
                         joint_idx += 1
 
                 print([degrees(joint_angle) for joint_angle in joint_angles])
+
+                return joint_angles
             case _:
                 sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
                 if sts_comm_result == 0:
-
                     for i, key in enumerate(self.joint_info):
                         if key["id"]==id:
                             self.joint_info[key]["servo_pos"] = sts_current_position
                             angle = self._servo_pos_to_angle(sts_current_position)
                             self.joint_info[key]["angle"] = angle
                             print(f"Servo [ID {id}] angle: {angle}")
+
+                            return angle
 
     def cont_read_joint_angle(self, id:int):
         """Continuously print out the joint angles in degrees.
@@ -380,12 +398,86 @@ class RobotArm:
         while(True):
             self.read_joint_angle(id)
 
+    # ========
+    # TEACHING
+    # ========
+
+    def save_position(self, name: str, overwrite: bool = False):
+        """Save the robot's current position into a dictionary.
+
+        Args
+        ----
+        name: str
+            A unique name for the saved position.
+        """
+        print(self.saved_positions.keys())
+
+
+        if (overwrite == True) and (name in self.saved_positions.keys()):
+            self.saved_positions.pop(name)
+
+        if (name not in self.saved_positions.keys()):
+            current_tf = self.compute_fk()  # read_joint_angles() is called inside this method
+            
+            pos_vec = current_tf[:3, 3].transpose()
+
+            current_angles = [degrees(joint["angle"]) for joint in self.joint_info.values()]
+
+            self.saved_positions.update(
+                {name: {
+                    "joint_angles": current_angles,
+                    "ee_position": pos_vec
+                }
+            }
+            )
+        else:
+            print(f"There is already a saved position with the name '{name}'. Please choose another name.")
+
+    def list_saved_positions(self):
+        """Prints out the dictionary of saved positions."""
+        print(self.saved_positions)
+
+    def recall(self, name: str):
+        """Move to a saved position."""
+
+        target_angles = [radians(angle) for angle in self.saved_positions[name]["joint_angles"]]
+
+        self.sync_write_angles(target_angles)            
+
+    # ============
+    # TOGGLE MODES
+    # ============
+
+    def set_teach_mode(self, on: bool):
+        pass
+
     # ==================
     # VALIDATION METHODS
     # ==================
 
-    def _check_joint_limits(self):
-        pass            
+    def _check_joint_limits(self, joint_idx, target_angle):
+        """Check if the target angle is within the joint's limits.
+        
+        Args
+        ----
+        joint_idx: int
+            The joint's index.
+
+        target_angle: float
+            The target angle in radians.
+
+        Returns
+        -------
+        is_valid: boolean
+            Whether the angle is within the limits or not.
+        """
+
+        if (target_angle >= self.joint_info[joint_idx]["min_angle"] and
+            target_angle <= self.joint_info[joint_idx]["max_angle"]
+            ):
+            return True
+        else:
+            return False            
 
     def _check_if_moving(self):
         """Check if robot is moving.
@@ -433,13 +525,13 @@ class RobotArm:
         match id:
             case 0:
                 for id in self._activeServos:
-                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.speed, self.accel)
                     if sts_comm_result == 0:
                         print(f"Servo [ID {id}] new position: {pos}")
                     else:
                         print(f"Error writing to servo with ID {id}: {sts_error}.")
             case _:
-                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.SPEED, self.ACCEL)
+                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, pos, self.speed, self.accel)
                 if sts_comm_result == 0:
                     print(f"Servo [ID {id}] new position: {pos}")
                 else:
@@ -469,7 +561,7 @@ class RobotArm:
 
         for (id, servo_pos) in zip(id_list, pos_list):
             # Add parameters to memory
-            sts_addparam_result = self._packetHandler.SyncWritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+            sts_addparam_result = self._packetHandler.SyncWritePosEx(id, servo_pos, self.speed, self.accel)
 
             # Write the parameters that were in memory
             sts_comm_result = self._packetHandler.groupSyncWrite.txPacket()
@@ -479,6 +571,8 @@ class RobotArm:
 
     def write_angle(self, id:int, angle:float):
         """Write an angle to a servo or all servos.
+
+        This method should only be used for manual servo control.
 
         Args
         ----
@@ -497,7 +591,7 @@ class RobotArm:
             case 0:
                 print(f"case 0")
                 for id in self._activeServos:
-                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                    sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.speed, self.accel)
                     if sts_comm_result == 0:
                         print(f"Servo [ID {id}] new angle: {angle}")
                         print(f"Servo [ID {id}] new position: {servo_pos}")
@@ -505,7 +599,7 @@ class RobotArm:
                         print(f"Error writing to servo with ID {id}: {sts_error}.")
             case _:
                 print(f"case _")
-                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.SPEED, self.ACCEL)
+                sts_comm_result, sts_error = self._packetHandler.WritePosEx(id, servo_pos, self.speed, self.accel)
                 if sts_comm_result == 0:
                     print(f"Servo [ID {id}] new position: {servo_pos}")
                 else:
@@ -537,7 +631,7 @@ class RobotArm:
         Args
         ----
         angles:list
-            A list of target angles.
+            A list of target angles in radians.
         """
 
         self._check_if_moving()
@@ -586,9 +680,7 @@ class RobotArm:
 
         joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
-        FK = self._k.get_FK_mat(joint_angles)
-
-        print(f"FK: {FK}")  # Debug
+        FK = self._k.calc_fk_mat(joint_angles)
 
         return FK
     
@@ -633,9 +725,13 @@ class RobotArm:
         """
 
         current_frame = self.compute_fk()
-        target_frame = self._k.tf_from_position(pos_vec, current_frame)
+
+        try:
+            target_frame = self._k.calc_tf_from_position(pos_vec, current_frame)
+        except Exception as e:
+            print(e)
         
-        target_joint_angles = self._k.calcAllJointAngles(target_frame)
+        target_joint_angles = self._k.calc_all_joint_angles(target_frame)
 
         return target_joint_angles
 
@@ -660,7 +756,7 @@ class RobotArm:
     # BASIC MOTIONS
     # =============
     
-    def move_x(self, x, delay=None):
+    def move_x(self, x: float, delay=None):
         """Linear move in the x direction.
         
         Args
@@ -684,7 +780,7 @@ class RobotArm:
         return self
 
 
-    def move_y(self, y, delay=None):
+    def move_y(self, y: float, delay=None):
         """
         Linear move in the y direction.
         
@@ -709,7 +805,7 @@ class RobotArm:
         return self
     
 
-    def move_z(self, z, delay=None):
+    def move_z(self, z: float, delay=None):
         """Linear move in the z direction.
         
         Args
@@ -749,7 +845,7 @@ class RobotArm:
         if delay==None:
             delay = self.MOVE_DELAY
 
-        targets_in_radians = [radians(angle) for angle in self.HOME]
+        targets_in_radians = [radians(angle) for angle in self.saved_positions["HOME"]["joint_angles"]]
         self.sync_write_angles(targets_in_radians)
         time.sleep(delay)
 

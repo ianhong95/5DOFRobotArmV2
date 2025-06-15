@@ -136,9 +136,9 @@ class Kinematics():
         """
 
         tf_mat = np.array([[cos(theta), -(sin(theta))*(cos(alpha)), (sin(theta))*(sin(alpha)), a*cos(theta)],
-                                [sin(theta), (cos(theta))*(cos(alpha)), -(cos(theta))*(sin(alpha)), a*sin(theta)],
-                                [0,           sin(alpha),                 cos(alpha),                 d],
-                                [0,           0,                          0,                          1]])
+                            [sin(theta), (cos(theta))*(cos(alpha)), -(cos(theta))*(sin(alpha)), a*sin(theta)],
+                            [0,           sin(alpha),                 cos(alpha),                 d],
+                            [0,           0,                          0,                          1]])
         
         return tf_mat
 
@@ -162,7 +162,7 @@ class Kinematics():
 
         joint_T_mat_list = []
 
-        for idx, joint in enumerate(self.DH_PARAMS.values()):
+        for idx, joint in enumerate(self.DH_PARAMS.keys()):
             joint_T_mat = self._get_tf_mat(self.DH_PARAMS[joint]["d"],
                                             joint_angles[idx] + self.DH_PARAMS[joint]["theta_offset"],
                                             self.DH_PARAMS[joint]["a"],
@@ -497,7 +497,7 @@ class Kinematics():
 
 
     def calc_all_joint_angles(self, tf_matrix):
-        """Calculate all joint angles using inverse kinematics.
+        """Calculate all target joint angles using inverse kinematics.
 
         Args
         ----
@@ -512,7 +512,7 @@ class Kinematics():
         joint_angles = self._calc_wrist_position_angles(tf_matrix)
         rot_mat_16 = tf_matrix[:3, :3]
 
-        rot_matrix_14 = self.rot_mat_14(joint_angles[0], joint_angles[1], joint_angles[2])
+        rot_matrix_14 = self._rot_mat_14(joint_angles[0], joint_angles[1], joint_angles[2])
         rot_mat_14_inv = rot_matrix_14.transpose()
 
         rot_mat_product = rot_mat_14_inv @ (rot_mat_16)
@@ -546,7 +546,7 @@ class Kinematics():
     TRANSLATIONS AND ROTATION
     """
 
-    def calc_tf_from_position(position_vec, current_frame):
+    def calc_tf_from_position(self, position_vec: list, current_frame):
         """Calculate the transformation matrix to move the end effector to a new position while keeping the same orientation.
 
         This method computes the transformation matrix for relative motion from the current point to a new point in Cartesian space using geometric transformations.
@@ -563,7 +563,7 @@ class Kinematics():
         -------
         A numpy array for the homogeneous transformation matrix that describes the absolute target pose in Cartesian space.
         """
-
+        print("calculating tf from position")
         translation_mtx = np.array([[1, 0, 0, position_vec[0]],
                                     [0, 1, 0, position_vec[1]],
                                     [0, 0, 1, position_vec[2]],
@@ -583,7 +583,7 @@ class Kinematics():
     yaw = rotation about z    
     """
 
-    def calc_tf_from_roll(roll_angle: float, current_frame):
+    def calc_tf_from_roll(self, roll_angle: float, current_frame):
         """Calculate the transformation matrix to roll the wrist.
 
         Roll is defined as a rotation about the wrist's x-axis.
@@ -611,7 +611,7 @@ class Kinematics():
         return new_frame
 
 
-    def calc_tf_from_pitch(pitch_angle: float, current_frame):
+    def calc_tf_from_pitch(self, pitch_angle: float, current_frame):
         """Calculate the transformation matrix to pitch the wrist.
 
         Pitch is defined as a rotation about the wrist's y-axis.
@@ -639,7 +639,7 @@ class Kinematics():
         return new_frame
 
 
-    def calc_tf_from_yaw(yaw_angle: float, current_frame):
+    def calc_tf_from_yaw(self, yaw_angle: float, current_frame):
         """Calculate the transformation matrix to yaw the wrist.
 
         Yaw is defined as a rotation about the wrist's z-axis.
