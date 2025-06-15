@@ -48,6 +48,8 @@ class RobotArm:
     move_y(y): Move a distance y along the global y axis relative to the current position.
 
     move_z(z): Move a distance z along the global z axis relative to the current position.
+
+    disable_servo(id): Disable the servo with the specified ID. Passing an ID of 0 will disable all servos.
     """
 
     def __init__(self):
@@ -59,16 +61,18 @@ class RobotArm:
         self._conn = self._start_connection()
         self._packetHandler = sms_sts(self._conn)
 
-        self._activeServos = self._get_active_servos()     # Search for servo IDs and store them in a list
+        self._activeServos = self._get_active_servos()  # Search for servo IDs and store them in a list
         
-        self.current_tf = self.compute_fk()               # Initialize kinematics
+        self.current_tf = self.compute_fk() # Initialize kinematics
 
-        self._move_complete = True                       # Initialize check properties
+        self._move_complete = True  # Initialize check properties
+
+        self.teach_positions = {}
 
         # Wait a couple of seconds for all operations to complete
         print("Robot initialized successfully. Moving to HOME position.")
 
-        self.home()     # Home the robot
+        self.home() # Home the robot
 
     # =================
     # INTERNAL METHODS
@@ -162,7 +166,8 @@ class RobotArm:
 
         # Load pre-defined positions
         self.saved_positions = {
-            "HOME": {
+            0: {
+                "alias": "HOME",
                 "joint_angles": config["defined_positions"]["home"],     # A list of angles in degrees
                 "ee_position": [],
                 "ee_orientation": []
@@ -371,9 +376,11 @@ class RobotArm:
                         joint_angles.append(angle)
 
                         joint_idx += 1
+                    else:
+                        print("Failed to access servo.")
 
                 print([degrees(joint_angle) for joint_angle in joint_angles])
-
+                time.sleep(1)
                 return joint_angles
             case _:
                 sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
@@ -402,54 +409,91 @@ class RobotArm:
     # TEACHING
     # ========
 
-    def save_position(self, name: str, overwrite: bool = False):
+    def set_teach_entry(self, id: int, alias: str = ""):
         """Save the robot's current position into a dictionary.
 
         Args
         ----
-        name: str
-            A unique name for the saved position.
+        alias: str
+            A unique alias for the saved position to reference it later.
         """
-        print(self.saved_positions.keys())
+        current_angles = [degrees(joint["angle"]) for joint in self.joint_info.values()]
+    
+        current_tf = self.compute_fk()  # read_joint_angles() is called inside this method
+        pos_vec = current_tf[:3, 3].transpose()
 
+        current_angles = [degrees(joint["angle"]) for joint in self.joint_info.values()]
 
-        if (overwrite == True) and (name in self.saved_positions.keys()):
-            self.saved_positions.pop(name)
+        self.saved_positions[id] = {
+            "alias": alias,
+            "joint_angles": current_angles,
+            "ee_position": pos_vec
+        }
 
-        if (name not in self.saved_positions.keys()):
-            current_tf = self.compute_fk()  # read_joint_angles() is called inside this method
-            
-            pos_vec = current_tf[:3, 3].transpose()
+        return [id, alias, current_angles, pos_vec]
 
-            current_angles = [degrees(joint["angle"]) for joint in self.joint_info.values()]
+    def save_new_position(self, alias: str = ""):
+        """Save the robot's current position as a new entry in the saved_positions dictionary."""
 
-            self.saved_positions.update(
-                {name: {
-                    "joint_angles": current_angles,
-                    "ee_position": pos_vec
-                }
-            }
-            )
+        for idx in range(len(self.saved_positions) + 1):
+            if idx not in [id for id in self.saved_positions.keys()]:
+                new_id = idx
+                break
+
+        self.set_teach_entry(new_id, alias)
+
+    def update_position_by_id(self, entry_id: int):
+        """Update an entry in the saved_positions dictionary by passing an ID."""
+
+        if entry_id in self.saved_positions.keys(): # Check if id exists
+            self.set_teach_entry(entry_id)
         else:
-            print(f"There is already a saved position with the name '{name}'. Please choose another name.")
+            print("ID {entry_id} does not exist. Please create a new entry using save_new_position().")
+
+    def update_position_by_alias(self, alias: str):
+        """Update an entry in the saved_positions dictionary by passing an alias."""
+
+        for id in self.saved_positions.keys():
+            if self.saved_positions[id]["alias"] == alias:
+                self.set_teach_entry(id)
+                break
 
     def list_saved_positions(self):
         """Prints out the dictionary of saved positions."""
         print(self.saved_positions)
 
-    def recall(self, name: str):
+    def recall_by_id(self, id: int):
+        target_angles = [radians(angle) for angle in self.saved_positions[id]["joint_angles"]]
+
+        print(target_angles)
+
+        self.sync_write_angles(target_angles)
+        
+        return self
+
+    def recall_by_name(self, name: str):
         """Move to a saved position."""
 
         target_angles = [radians(angle) for angle in self.saved_positions[name]["joint_angles"]]
 
-        self.sync_write_angles(target_angles)            
+        self.sync_write_angles(target_angles)
+
+    def recall_all(self):
+        for entry_id in self.saved_positions.keys():
+            self.recall_by_id(entry_id)
 
     # ============
     # TOGGLE MODES
     # ============
 
     def set_teach_mode(self, on: bool):
-        pass
+        """
+        """
+        self.disable_servo(0)
+
+        # alias = input("Enter a name for the position (leave blank to set it to an auto-generated ID): ")
+        # self.save_new_position(alias)
+
 
     # ==================
     # VALIDATION METHODS
@@ -502,11 +546,29 @@ class RobotArm:
     # ======================
 
     def disable_servo(self, id:int):
-        """Disable a servo or all servo.
-        
-        TODO: Before implementing this method, the packet info must be able to read the "enable" setting.
+        """Disable a servo or all servos.
+
+        Sets the servo to not hold torque. It is automatically re-enabled when the servo is commanded to a position.
+
+        Args
+        ----
+        id: int
+            Pass the ID of the servo to disable, or pass an ID of 0 to disable all servos.
         """
-        pass
+        match id:
+            case 0:
+                for id in self._activeServos:
+                    sts_comm_result, sts_error = self._packetHandler.writeEnable(id, 0)
+                    if sts_comm_result == 0:
+                        print(f"Servo [ID {id}] disabled")
+                    else:
+                        print(f"Error writing to servo with ID {id}: {sts_error}.")
+            case _:
+                sts_comm_result, sts_error = self._packetHandler.writeEnable(id, 0)
+                if sts_comm_result == 0:
+                    print(f"Servo [ID {id}] disabled")
+                else:
+                    print(f"Error writing to servo with ID {id}: {sts_error}.")
 
     def write_servo_pos(self, id:int, pos: int):
         """Write position to a servo.
@@ -845,8 +907,13 @@ class RobotArm:
         if delay==None:
             delay = self.MOVE_DELAY
 
-        targets_in_radians = [radians(angle) for angle in self.saved_positions["HOME"]["joint_angles"]]
+        targets_in_radians = [radians(angle) for angle in self.saved_positions[0]["joint_angles"]]
         self.sync_write_angles(targets_in_radians)
+
+        time.sleep(1)   # This delay is necessary for the MCU to finish processing the previous command.
+
+        self.update_position_by_alias("HOME")
+
         time.sleep(delay)
 
         return self

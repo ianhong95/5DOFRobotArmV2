@@ -118,5 +118,7 @@ class sms_sts(protocol_packet_handler):
     def readEnable(self, id):
         enabled, scs_comm_result, scs_error = self.read1ByteTxRx(id, SMS_STS_TORQUE_ENABLE)
         return enabled, scs_comm_result, scs_error
-
+    
+    def writeEnable(self, id, enable):
+        return self.write1ByteTxRx(id, SMS_STS_TORQUE_ENABLE, enable)
 
