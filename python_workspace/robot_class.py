@@ -380,7 +380,7 @@ class RobotArm:
                         print("Failed to access servo.")
 
                 print([degrees(joint_angle) for joint_angle in joint_angles])
-                time.sleep(1)
+                
                 return joint_angles
             case _:
                 sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(id)
