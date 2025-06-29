@@ -109,7 +109,7 @@ class PortHandler(object):
         return True
 
     def getCFlagBaud(self, baudrate):
-        if baudrate in [4800, 9600, 14400, 19200, 38400, 57600, 115200, 128000, 250000, 500000, 1000000]:
+        if baudrate in [4800, 9600, 14400, 19200, 38400, 57600, 115200, 128000, 250000, 500000, 921600, 1000000]:
             return baudrate
         else:
             return -1          

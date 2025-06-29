@@ -112,8 +112,11 @@ class sms_sts(protocol_packet_handler):
 
     # --- CUSTOM METHODS ---
 
-    # def SetID(self, current_id, new_id):
-    #     return self.write1ByteTxRx(current_id, SMS_STS_ID, 0)
+    def SetID(self, current_id, new_id):
+        self.unLockEprom(current_id)
+        self.write2ByteTxRx(current_id, SMS_STS_ID, new_id)
+        self.LockEprom(new_id)
+        return
 
     def readEnable(self, id):
         enabled, scs_comm_result, scs_error = self.read1ByteTxRx(id, SMS_STS_TORQUE_ENABLE)
@@ -121,4 +124,12 @@ class sms_sts(protocol_packet_handler):
     
     def writeEnable(self, id, enable):
         return self.write1ByteTxRx(id, SMS_STS_TORQUE_ENABLE, enable)
+    
+    def readBaudrate(self, sts_id):
+        baudrate, sts_comm_result, sts_error = self.read2ByteTxRx(sts_id, SMS_STS_BAUD_RATE)
+        return baudrate
+    
+    def writeBaudrate(self, sts_id):
+        return self.write1ByteTxRx(sts_id, SMS_STS_BAUD_RATE, SMS_STS_115200)
+
 

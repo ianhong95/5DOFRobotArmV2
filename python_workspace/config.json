@@ -5,7 +5,7 @@
     },
     "serial_settings": {
         "device": "/dev/ttyUSB0",
-        "baudrate": 115200,
+        "baudrate": 921600,
         "timeout": 5
     },
     "servo_params": {
