@@ -70,9 +70,9 @@ class RobotArm:
         self.teach_positions = {}
 
         # Wait a couple of seconds for all operations to complete
-        print("Robot initialized successfully. Moving to HOME position.")
+        # print("Robot initialized successfully. Moving to HOME position.")
 
-        self.home() # Home the robot
+        # self.home() # Home the robot
 
     # =================
     # INTERNAL METHODS

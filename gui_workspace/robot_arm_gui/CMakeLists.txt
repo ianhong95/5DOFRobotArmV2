@@ -10,16 +10,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
 set(PROJECT_SOURCES
+        robotarmclient.h
+        robotarmclient.cpp
         main.cpp
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 5)
     qt_add_executable(robot_arm_gui
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
@@ -63,12 +65,12 @@ set(BREEZE_STYLES all CACHE STRING "The styles to include in our stylesheets.")
 include(breeze)
 
 # add_executable(myapp WIN32 MACOSX_BUNDLE "main.cpp")
-target_link_libraries(robot_arm_gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze)
+target_link_libraries(robot_arm_gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network)
 
 install(TARGETS robot_arm_gui
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-if(QT_VERSION_MAJOR EQUAL 6)
+if(QT_VERSION_MAJOR EQUAL 5)
     qt_finalize_executable(robot_arm_gui)
 endif()

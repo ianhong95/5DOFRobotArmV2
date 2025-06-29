@@ -1,4 +1,8 @@
 {
+    "network_settings":{
+        "HOST": "0.0.0.0",
+        "PORT": 61234
+    },
     "serial_settings": {
         "device": "/dev/ttyUSB0",
         "baudrate": 115200,
@@ -49,7 +53,7 @@
         "home": [-0.00, -37.49, 126.20, 89.54, 0.00]
     },
     "run_params": {
-        "move_delay": 1
+        "move_delay": 0
     },
     "joint_limits": {
         "joint_1": {
