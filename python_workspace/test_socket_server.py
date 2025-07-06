@@ -1,6 +1,5 @@
 import socket
 import json
-from robot_class import RobotArm
 import time
 import struct
 
@@ -16,27 +15,12 @@ HOST = config["network_settings"]["HOST"]
 PORT = config["network_settings"]["PORT"]
 BYTE_FRAME_LENGTH = 64
 
-ROBOT = RobotArm()
-
-CMD_MAP = {
-    "connect": "initialize",
-    "home": ROBOT.home,
-    "disable": ROBOT.disable_servo,
-    "move_x": ROBOT.move_x,
-    "move_y": ROBOT.move_y,
-    "move_z": ROBOT.move_z
-}
-
 # TODO: Add an exception if port is in use
 
 def handle_command(cmd, *args):
     # if cmd.startswith("testy"):
     #     return ("testy success")
-    func = CMD_MAP.get(cmd)
-    if func:
-        response = func(*args)
-        print(f"Executed {func}.")
-        return response
+    pass
 
 def sock_listener():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -54,20 +38,15 @@ def sock_listener():
                     try:
                         # This block will accumulate data
                         packet = accumulate_packet(conn)
+                        print("accumulated packet")
                         if packet is None:
                             print("Client disconnected.")
                             break
 
-                        joint_angle_res = packet_to_cmd(packet)
+                        response = packet_to_cmd(packet)
 
-                        packet_to_send = struct.pack(
-                            '<5f',
-                            joint_angle_res[0],
-                            joint_angle_res[1],
-                            joint_angle_res[2],
-                            joint_angle_res[3],
-                            joint_angle_res[4],
-                            )
+                        packet_to_send = struct.pack('<5f', 69.69, 42.69, 1, 2, 3)
+
                         print(f"final response: {packet_to_send}")
                         
                         if (packet_to_send):
@@ -102,9 +81,9 @@ def packet_to_cmd(packet):
     try:
         json_str = packet.decode("utf-8")   # Decode bytes and serialize data in to a string
         json_data = json.loads(json_str)     # Re-serialize data into JSON object            
-        response = handle_command(json_data["command"], *json_data["args"])
-        print(f"packet_to_cmd response: {response}")
-        return response
+        # response = handle_command(json_data["command"], *json_data["args"])
+        # print(f"packet_to_cmd response: {response}")
+        # return response
     except:
         print("bro wtf")
 

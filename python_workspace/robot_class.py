@@ -276,7 +276,7 @@ class RobotArm:
 
         Returns
         -------
-        An angle value.
+        An angle value (degrees by default).
         """
         match unit:
             case "deg":
@@ -361,7 +361,7 @@ class RobotArm:
 
         Returns
         -------
-        Either a list of 5 angles or a single angle as a float.
+        Either a list of 5 angles in radians or a single angle as a float.
 
         TODO: Clean up variable names and logic. Try to use list comprehension.
         """
@@ -379,7 +379,8 @@ class RobotArm:
 
                         joint_idx += 1
                     else:
-                        print("Failed to access servo.")
+                        print(f"Failed to access servo {id}. Cancelling motion.")
+                        break
 
                 print([degrees(joint_angle) for joint_angle in joint_angles])
                 
@@ -918,4 +919,6 @@ class RobotArm:
 
         time.sleep(delay)
 
-        return self
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+
+        return new_angles

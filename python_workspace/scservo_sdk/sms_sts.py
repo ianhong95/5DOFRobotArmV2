@@ -110,19 +110,26 @@ class sms_sts(protocol_packet_handler):
         return self.write1ByteTxRx(scs_id, SMS_STS_LOCK, 0)
 
 
-    # --- CUSTOM METHODS ---
+    # ======================
+    # === CUSTOM METHODS ===
+    # ======================
 
     def SetID(self, current_id, new_id):
         self.unLockEprom(current_id)
         self.write2ByteTxRx(current_id, SMS_STS_ID, new_id)
         self.LockEprom(new_id)
-        return
+        return True
 
     def readEnable(self, id):
         enabled, scs_comm_result, scs_error = self.read1ByteTxRx(id, SMS_STS_TORQUE_ENABLE)
         return enabled, scs_comm_result, scs_error
     
     def writeEnable(self, id, enable):
+        ''' Sends an enable/disable command.
+
+        Pass enable=0 for disable and enable=1 for enable.
+        '''
+
         return self.write1ByteTxRx(id, SMS_STS_TORQUE_ENABLE, enable)
     
     def readBaudrate(self, sts_id):
@@ -130,6 +137,14 @@ class sms_sts(protocol_packet_handler):
         return baudrate
     
     def writeBaudrate(self, sts_id):
-        return self.write1ByteTxRx(sts_id, SMS_STS_BAUD_RATE, SMS_STS_115200)
+        ''' Sets a new baudrate for a single servo motor.
+
+        Be careful with this method; you won't be able to communicate with the servo until you change the board's baudrate to match the servo.
+        '''
+
+        self.unLockEprom(sts_id)
+        self.write1ByteTxRx(sts_id, SMS_STS_BAUD_RATE, SMS_STS_115200)
+        self.LockEprom(sts_id)
+        return True
 
 
