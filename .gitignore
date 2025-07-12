@@ -6,3 +6,8 @@ python_workspace/debug_tools/.printer_history
 python_workspace/debug_tools/api_logs.log
 .vscode
 build-robot_arm_gui-Desktop-Debug
+ai_prompt.txt
+cursor_designing_a_custom_communication.md
+cursor_structuring_python_protocol_for.md
+cursor_understanding_references_and_poi.md
+.gitignore
