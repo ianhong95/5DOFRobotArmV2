@@ -11,5 +11,10 @@ class ProtocolParser:
     def decode_message():
         return
     
-    def encode_joint_angles(payload: list[float]):
-        return
+    @staticmethod
+    def encode_joint_angles(payload: list[float]) -> bytes:
+        """Encode joint angles (degrees) to bytes, and prepends the READ_JOINT_ANGLES message type."""
+        message_type = MessageTypes.READ_JOINT_ANGLES.value
+        packed_angles = struct.pack("<5f", *payload)
+
+        return message_type + packed_angles

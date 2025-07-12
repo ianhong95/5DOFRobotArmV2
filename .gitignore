@@ -11,3 +11,4 @@ cursor_designing_a_custom_communication.md
 cursor_structuring_python_protocol_for.md
 cursor_understanding_references_and_poi.md
 .gitignore
+socket_server_backup.py

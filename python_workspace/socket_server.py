@@ -1,115 +1,72 @@
+"""Socket server for communicating via TCP.
+
+For now, it will only handle one client.
+"""
+
 import socket
 import json
-from robot_class import RobotArm
-import time
-import struct
 
-CONFIG_FILE = "config.json"
-try:
-    with open(CONFIG_FILE, "r") as f:
-        config = json.load(f)
-except:
-    print(f"{CONFIG_FILE} not found.")
-    exit()
+from message_handler import MessageHandler
 
-HOST = config["network_settings"]["HOST"]
-PORT = config["network_settings"]["PORT"]
-BYTE_FRAME_LENGTH = 64
+class SocketServer:
+    BYTE_FRAME_LENGTH = 64  # Test with 64 for now
 
-ROBOT = RobotArm()
+    def __init__(self, config_file="config.json"):
+        # Initialize configuration settings
+        self.config = self._load_config(config_file)
+        self.HOST_ADDR = self.config["network_settings"]["HOST"]
+        self.NETWORK_PORT = self.config["network_settings"]["PORT"]
 
-CMD_MAP = {
-    "connect": "initialize",
-    "home": ROBOT.home,
-    "disable": ROBOT.disable_servo,
-    "move_x": ROBOT.move_x,
-    "move_y": ROBOT.move_y,
-    "move_z": ROBOT.move_z
-}
+        # Initialize communication classes
+        self.message_handler = MessageHandler()
 
-# TODO: Add an exception if port is in use
+    def _load_config(self, config_file):
+        """Load network settings from configuration file."""
+        try:
+            with open(config_file, "r") as f:
+                config = json.load(f)
+                return config
+        except:
+            print(f"Configuration JSON file {config_file} not found.")
+            exit()
 
-def handle_command(cmd, *args):
-    # if cmd.startswith("testy"):
-    #     return ("testy success")
-    func = CMD_MAP.get(cmd)
-    if func:
-        response = func(*args)
-        print(f"Executed {func}.")
-        return response
+    def start(self):
+        """Start the socket server and listen for client connections."""
+        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_server.bind((self.HOST_ADDR, self.NETWORK_PORT))
+        self.socket_server.listen()
 
-def sock_listener():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen()
-        print(f"Server listening on {HOST}:{PORT}")
+        print(f"Server started. Listening on {self.HOST_ADDR}:{self.NETWORK_PORT}")
 
         while True:
-            print("waiting for clients")
-            conn, addr = s.accept()  # Wait for incoming connection
+            print("Waiting for clients...")
+            self.client, client_addr = self.socket_server.accept() # Wait for incoming connection
+            print(f"Client connected from {client_addr}.")
+            while True:
+                self._handle_client_message()   # Listen for and handle client messages indefinitely
 
-            with conn:
-                print(f"Client {addr} is connected to the server.")
-                while True:
-                    try:
-                        # This block will accumulate data
-                        packet = accumulate_packet(conn)
-                        if packet is None:
-                            print("Client disconnected.")
-                            break
+    def stop(self):
+        """Stop the socket server."""
+        self.socket_server.close()
+        print("Socket server connection closed.")
 
-                        joint_angle_res = packet_to_cmd(packet)
+    def _handle_client_message(self):
+        """Call the protocol handler to receive and process the incoming client messages."""
+        incoming_packet = self._accumulate_packet()
+        response = self.message_handler.handle_message(incoming_packet)
 
-                        packet_to_send = struct.pack(
-                            '<5f',
-                            joint_angle_res[0],
-                            joint_angle_res[1],
-                            joint_angle_res[2],
-                            joint_angle_res[3],
-                            joint_angle_res[4],
-                            )
-                        print(f"final response: {packet_to_send}")
-                        
-                        if (packet_to_send):
-                            conn.sendall(packet_to_send)
-                    except Exception as e:
-                        print(f"Socket error: {e}")
-                        break
-            print(f"Client {addr} disconnected.")
+        if (response):
+            self.client.sendall(response)
 
-def accumulate_packet(connection):
-    data_store = b''
+    def _accumulate_packet(self) -> bytes:
+        """Receive bytes until the byte frame is filled."""
+        data_store = b''
 
-    while (len(data_store) < BYTE_FRAME_LENGTH):
-        # print(f"accumulating data: {len(data_store)}")
-        packet = connection.recv(BYTE_FRAME_LENGTH - len(data_store))
-        if not packet:
-            # Client disconnected before full frame
-            if not data_store:
-                print("Client disconnected before sending any data.")
-                return None
-            else:
-                print("Client disconnected mid-frame.")
-                return None
-        # print(f"incoming packet: {packet}")
-        data_store += packet
+        while (len(data_store) < self.BYTE_FRAME_LENGTH):
+            # Try to receive the number of bytes required to fill the frame
+            packet = self.client.recv(self.BYTE_FRAME_LENGTH - len(data_store))
+            data_store += packet
+        
+        stripped_data = data_store.rstrip(b'\0')    # Clear null byte padding
 
-    stripped_data = data_store.rstrip(b'\0')  # Clear null bytes
-
-    return stripped_data
-
-def packet_to_cmd(packet):
-    try:
-        json_str = packet.decode("utf-8")   # Decode bytes and serialize data in to a string
-        json_data = json.loads(json_str)     # Re-serialize data into JSON object            
-        response = handle_command(json_data["command"], *json_data["args"])
-        print(f"packet_to_cmd response: {response}")
-        return response
-    except:
-        print("bro wtf")
-
-def main():
-    sock_listener()
-
-if __name__=="__main__":
-    main()
+        return stripped_data
