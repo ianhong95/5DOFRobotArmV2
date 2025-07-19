@@ -10,5 +10,8 @@ ai_prompt.txt
 cursor_designing_a_custom_communication.md
 cursor_structuring_python_protocol_for.md
 cursor_understanding_references_and_poi.md
+cursor_using_references_as_output_param.md
+cursor_organizing_protocol_constants_in.md
 .gitignore
 socket_server_backup.py
+api_logs.log

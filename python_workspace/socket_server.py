@@ -1,12 +1,17 @@
 """Socket server for communicating via TCP.
 
 For now, it will only handle one client.
+
+This file sets up the socket server, listens for clients, then listens for incoming messages.
+When messages are received, they are routed to the message handler, and the response from the message handler
+is sent backt to the client.
 """
 
 import socket
 import json
 
 from message_handler import MessageHandler
+from protocol_constants import ProtocolConstants, MessageTypes
 
 class SocketServer:
     BYTE_FRAME_LENGTH = 64  # Test with 64 for now
@@ -17,8 +22,9 @@ class SocketServer:
         self.HOST_ADDR = self.config["network_settings"]["HOST"]
         self.NETWORK_PORT = self.config["network_settings"]["PORT"]
 
-        # Initialize communication classes
+        # Initialize communication classes and register handlers
         self.message_handler = MessageHandler()
+        self._register_handlers()
 
     def _load_config(self, config_file):
         """Load network settings from configuration file."""
@@ -29,6 +35,14 @@ class SocketServer:
         except:
             print(f"Configuration JSON file {config_file} not found.")
             exit()
+
+    def _register_handlers(self):
+        if self.message_handler:
+            self.message_handler.register_handler(MessageTypes.CONNECT, self.message_handler.handle_connect)
+            self.message_handler.register_handler(MessageTypes.DISCONNECT, self.message_handler.handle_disconnect)
+            self.message_handler.register_handler(MessageTypes.HOME, self.message_handler.handle_home)
+            self.message_handler.register_handler(MessageTypes.DISABLE, self.message_handler.handle_disable)
+            self.message_handler.register_handler(MessageTypes.READ_JOINT_ANGLES, self.message_handler.handle_read_joint_angles)
 
     def start(self):
         """Start the socket server and listen for client connections."""
@@ -55,8 +69,8 @@ class SocketServer:
         incoming_packet = self._accumulate_packet()
         response = self.message_handler.handle_message(incoming_packet)
 
-        if (response):
-            self.client.sendall(response)
+        # if (response):
+        #     self.client.sendall(response[1:])
 
     def _accumulate_packet(self) -> bytes:
         """Receive bytes until the byte frame is filled."""
