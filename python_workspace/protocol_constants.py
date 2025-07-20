@@ -15,8 +15,12 @@ class MessageTypes:
     MOVE_J3 = b'\x20'
     MOVE_J4 = b'\x21'
     MOVE_J5 = b'\x22'
+
+class ResponseTypes:
     OK = b'\x64'
+    ERROR = b'\x65'
 
 # Message structures
 class ProtocolConstants:
+    FRAME_BUFFER_LENGTH = 64
     JOINT_ANGLES_RESP_SIZE = 20

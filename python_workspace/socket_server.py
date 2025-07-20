@@ -67,10 +67,12 @@ class SocketServer:
     def _handle_client_message(self):
         """Call the protocol handler to receive and process the incoming client messages."""
         incoming_packet = self._accumulate_packet()
-        response = self.message_handler.handle_message(incoming_packet)
+        response_data = self.message_handler.handle_message(incoming_packet)
 
-        # if (response):
-        #     self.client.sendall(response[1:])
+        print(f"Response: {response_data}")
+
+        if (response_data):
+            self.client.sendall(response_data)
 
     def _accumulate_packet(self) -> bytes:
         """Receive bytes until the byte frame is filled."""

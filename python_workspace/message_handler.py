@@ -24,30 +24,29 @@ class MessageHandler:
     def handle_message(self, incoming_message: bytes) -> bytes:
         """Extract the message type and payload, then call the appropriate handler method."""
         message_type_value, payload = ProtocolParser.decode_message(incoming_message)
-        print(f'message_type_key: {message_type_value}')
 
         response = self.message_handlers[message_type_value](payload)
         
         return response
     
     def handle_connect(self, payload: bytes) -> bytes:
-        return(ProtocolParser.encode_message(MessageTypes.CONNECT, MessageTypes.OK))
+        return(ProtocolParser.encode_message(MessageTypes.CONNECT))
 
     def handle_disconnect(self, payload: bytes) -> bytes:
-        return(ProtocolParser.encode_message(MessageTypes.DISCONNECT, MessageTypes.OK))
+        return(ProtocolParser.encode_message(MessageTypes.DISCONNECT))
 
     def handle_home(self, payload: bytes) -> bytes:
         self.robot_arm.home()
-        return(ProtocolParser.encode_message(MessageTypes.HOME, MessageTypes.OK))
+        return(ProtocolParser.encode_message(MessageTypes.HOME))
 
     def handle_disable(self, payload: bytes) -> bytes:
         self.robot_arm.disable_servo(0)
-        return(ProtocolParser.encode_message(MessageTypes.DISABLE, MessageTypes.OK))
+        return(ProtocolParser.encode_message(MessageTypes.DISABLE))
 
     def handle_read_joint_angles(self, payload: bytes) -> bytes:
         """Read the robot's joint angles and convert them to degrees."""
         angles_in_radians = self.robot_arm.read_joint_angle(0)
-        angles_in_degrees = [degrees(angle) for angle in angles_in_radians]
-        byte_angles = ProtocolParser.encode_joint_angles(angles_in_degrees)
+        angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
+        encoded_message = ProtocolParser.encode_message(MessageTypes.READ_JOINT_ANGLES, angles_in_degrees)
 
-        return(ProtocolParser.encode_message(MessageTypes.READ_JOINT_ANGLES, byte_angles))
+        return encoded_message
