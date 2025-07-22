@@ -12,6 +12,7 @@ import json
 
 from message_handler import MessageHandler
 from protocol_constants import ProtocolConstants, MessageTypes
+from protocol_parser import ProtocolParser
 
 class SocketServer:
     BYTE_FRAME_LENGTH = 64  # Test with 64 for now
@@ -21,6 +22,7 @@ class SocketServer:
         self.config = self._load_config(config_file)
         self.HOST_ADDR = self.config["network_settings"]["HOST"]
         self.NETWORK_PORT = self.config["network_settings"]["PORT"]
+        self.client_connected = False
 
         # Initialize communication classes and register handlers
         self.message_handler = MessageHandler()
@@ -55,8 +57,11 @@ class SocketServer:
         while True:
             print("Waiting for clients...")
             self.client, client_addr = self.socket_server.accept() # Wait for incoming connection
+
+            self.client_connected = True
             print(f"Client connected from {client_addr}.")
-            while True:
+
+            while (self.client_connected):
                 self._handle_client_message()   # Listen for and handle client messages indefinitely
 
     def stop(self):
@@ -73,6 +78,10 @@ class SocketServer:
 
         if (response_data):
             self.client.sendall(response_data)
+
+        if (response_data == ProtocolParser.encode_message(MessageTypes.DISCONNECT)):
+            self.client_connected = False
+            print(f"Client disconnected.")
 
     def _accumulate_packet(self) -> bytes:
         """Receive bytes until the byte frame is filled."""

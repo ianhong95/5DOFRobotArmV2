@@ -219,7 +219,6 @@ class RobotArm:
         joint_idx = 1
         for id in range(self._MAX_ID):
             sts_model_number, sts_comm_result, sts_error = self._packetHandler.ping(id)
-            print(sts_comm_result)
             if sts_comm_result == 0:
                 br = self._packetHandler.readBaudrate(id)
                 print(f"Found active servo. ID: {id}. Baudrate is {br}")
@@ -381,8 +380,6 @@ class RobotArm:
                     else:
                         print(f"Failed to access servo {id}. Cancelling motion.")
                         break
-
-                print([degrees(joint_angle) for joint_angle in joint_angles])
                 
                 return joint_angles
             case _:

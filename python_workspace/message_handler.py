@@ -5,6 +5,8 @@ This class is responsible for calling encode/decode on messages, then routing th
 from typing import Callable, Dict, Any  # Only for type hinting; built-in versions would create objects instead
 from math import degrees
 
+import numpy as np
+
 from protocol_constants import ProtocolConstants, MessageTypes
 from protocol_parser import ProtocolParser
 from robot_class import RobotArm
@@ -30,18 +32,24 @@ class MessageHandler:
         return response
     
     def handle_connect(self, payload: bytes) -> bytes:
-        return(ProtocolParser.encode_message(MessageTypes.CONNECT))
+        return (ProtocolParser.encode_message(MessageTypes.CONNECT))
 
     def handle_disconnect(self, payload: bytes) -> bytes:
-        return(ProtocolParser.encode_message(MessageTypes.DISCONNECT))
+        return (ProtocolParser.encode_message(MessageTypes.DISCONNECT))
 
     def handle_home(self, payload: bytes) -> bytes:
         self.robot_arm.home()
-        return(ProtocolParser.encode_message(MessageTypes.HOME))
+        angles_in_radians = self.robot_arm.read_joint_angle(0)
+        angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
+        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
+        
+        return (ProtocolParser.encode_message(MessageTypes.HOME, angles_in_degrees + rounded_xyz_position))
 
     def handle_disable(self, payload: bytes) -> bytes:
         self.robot_arm.disable_servo(0)
-        return(ProtocolParser.encode_message(MessageTypes.DISABLE))
+
+        return (ProtocolParser.encode_message(MessageTypes.DISABLE))
 
     def handle_read_joint_angles(self, payload: bytes) -> bytes:
         """Read the robot's joint angles and convert them to degrees."""
