@@ -4,6 +4,7 @@ This class is responsible for calling encode/decode on messages, then routing th
 """
 from typing import Callable, Dict, Any  # Only for type hinting; built-in versions would create objects instead
 from math import degrees
+import struct
 
 import numpy as np
 
@@ -58,3 +59,18 @@ class MessageHandler:
         encoded_message = ProtocolParser.encode_message(MessageTypes.READ_JOINT_ANGLES, angles_in_degrees)
 
         return encoded_message
+    
+    def handle_update_EE_pos(self, payload: bytes) -> bytes:
+        """Read the end effector's position in Cartesian coordinates (x,y,z)."""
+
+        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
+
+        return (ProtocolParser.encode_message(MessageTypes.UPDATE_EE_POSITION, rounded_xyz_position))
+    
+    def handle_move_x(self, payload: bytes) -> bytes:
+        """Move in the x direction by a specified distance from the current position."""
+        
+        x_distance = (struct.unpack('f', payload))[0]
+
+        self.robot_arm.move_x(x_distance)

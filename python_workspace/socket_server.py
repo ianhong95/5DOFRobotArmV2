@@ -45,6 +45,8 @@ class SocketServer:
             self.message_handler.register_handler(MessageTypes.HOME, self.message_handler.handle_home)
             self.message_handler.register_handler(MessageTypes.DISABLE, self.message_handler.handle_disable)
             self.message_handler.register_handler(MessageTypes.READ_JOINT_ANGLES, self.message_handler.handle_read_joint_angles)
+            self.message_handler.register_handler(MessageTypes.UPDATE_EE_POSITION, self.message_handler.handle_update_EE_pos)
+            self.message_handler.register_handler(MessageTypes.MOVE_X, self.message_handler.handle_move_x)
 
     def start(self):
         """Start the socket server and listen for client connections."""
@@ -84,7 +86,11 @@ class SocketServer:
             print(f"Client disconnected.")
 
     def _accumulate_packet(self) -> bytes:
-        """Receive bytes until the byte frame is filled."""
+        """Receive bytes until the byte frame is filled.
+        
+        TODO: Handle cases where the last byte(s) could be null bytes. Right now it could
+        strip too much even if trailing nulls are valid parts of the message.
+        """
         data_store = b''
 
         while (len(data_store) < self.BYTE_FRAME_LENGTH):

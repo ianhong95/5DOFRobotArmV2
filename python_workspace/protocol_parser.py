@@ -35,8 +35,11 @@ class ProtocolParser:
     
     @staticmethod
     def decode_message(incoming_message: bytes):
-        """Decode a message (bytes) to extract the message type and payload into a format that can be used by other classes."""
-        message_byte = incoming_message
+        """Decode a message (bytes) to extract the message type and payload into a format that can be used by other classes.
+        
+        At this point, the message has been stripped of all trailing null bytes.
+        """
+        message_byte = incoming_message[0]
 
         if (len(incoming_message) > 1):
             payload = incoming_message[1:]
