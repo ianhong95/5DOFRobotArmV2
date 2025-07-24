@@ -1,7 +1,11 @@
 """Message routing class.
 
 This class is responsible for calling encode/decode on messages, then routing the message to the appropriate handler method.
+When this class is initialized, a handler dictionary is created. This dictionary maps each handler method to a message type
+so the handle_message method can select a method based on the received message type, which is a superior alternative to a
+very larget match/case or conditional statement.
 """
+
 from typing import Callable, Dict, Any  # Only for type hinting; built-in versions would create objects instead
 from math import degrees
 import struct
@@ -13,6 +17,8 @@ from protocol_parser import ProtocolParser
 from robot_class import RobotArm
 
 class MessageHandler:
+    """A class for handling incoming messages and routing them to the appropriate handler method based on the message type."""
+
     def __init__(self):
         # Dictionary to map handler methods to message types so we can have just one generic "handle_message" method
         self.message_handlers: Dict[bytes, Callable] = {}
@@ -39,6 +45,11 @@ class MessageHandler:
         return (ProtocolParser.encode_message(MessageTypes.DISCONNECT))
 
     def handle_home(self, payload: bytes) -> bytes:
+        """Moves the robot to the home position.
+        
+        Returns the HOME message type, joint angles, and coordinates in Cartesian space.
+        """
+
         self.robot_arm.home()
         angles_in_radians = self.robot_arm.read_joint_angle(0)
         angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
@@ -48,12 +59,18 @@ class MessageHandler:
         return (ProtocolParser.encode_message(MessageTypes.HOME, angles_in_degrees + rounded_xyz_position))
 
     def handle_disable(self, payload: bytes) -> bytes:
+        """Disables all motors."""
+
         self.robot_arm.disable_servo(0)
 
         return (ProtocolParser.encode_message(MessageTypes.DISABLE))
 
     def handle_read_joint_angles(self, payload: bytes) -> bytes:
-        """Read the robot's joint angles and convert them to degrees."""
+        """Read the robot's joint angles and convert them to degrees.
+        
+        Returns the encoded message type and joint angles (byte representation of floats).
+        """
+
         angles_in_radians = self.robot_arm.read_joint_angle(0)
         angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
         encoded_message = ProtocolParser.encode_message(MessageTypes.READ_JOINT_ANGLES, angles_in_degrees)
@@ -61,7 +78,10 @@ class MessageHandler:
         return encoded_message
     
     def handle_update_EE_pos(self, payload: bytes) -> bytes:
-        """Read the end effector's position in Cartesian coordinates (x,y,z)."""
+        """Read the end effector's position in Cartesian coordinates (x,y,z).
+        
+        Returns the encoded message type and Cartesian coordinates.
+        """
 
         xyz_position = (self.robot_arm.get_ee_pos()).tolist()
         rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]

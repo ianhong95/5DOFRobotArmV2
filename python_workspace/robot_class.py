@@ -205,7 +205,7 @@ class RobotArm:
 
         return portHandler
     
-    def _get_active_servos(self):
+    def _get_active_servos(self) -> list[int]:
         """Fetches active servo IDs.
 
         Searches through all IDs from 0 to max_id for connected servo motors, and adds them to the class property joint_info.
@@ -233,7 +233,7 @@ class RobotArm:
         
         return activeServos
 
-    def _angle_to_servo_pos(self, angle:float, unit:str="deg"):
+    def _angle_to_servo_pos(self, angle:float, unit:str="deg") -> int:
         """Converts an input angle to a servo position value.
         
         Args
@@ -262,7 +262,7 @@ class RobotArm:
 
         return int(pos)
             
-    def _servo_pos_to_angle(self, servo_pos:int, unit:str="deg"):
+    def _servo_pos_to_angle(self, servo_pos:int, unit:str="deg") -> float:
         """Converts an servo position to an angle.
         
         Args
@@ -409,7 +409,7 @@ class RobotArm:
     # TEACHING
     # ========
 
-    def set_teach_entry(self, id: int, alias: str = ""):
+    def set_teach_entry(self, id: int, alias: str = "") -> list:
         """Save the robot's current position into a dictionary.
 
         Args
@@ -487,7 +487,9 @@ class RobotArm:
     # ============
 
     def set_teach_mode(self, on: bool):
-        """
+        """Disables all motors and sets the robot to teach mode.
+
+        TODO: Actually implement this function.
         """
         self.disable_servo(0)
 
@@ -499,7 +501,7 @@ class RobotArm:
     # VALIDATION METHODS
     # ==================
 
-    def _check_joint_limits(self, joint_idx, target_angle):
+    def _check_joint_limits(self, joint_idx: int, target_angle: float):
         """Check if the target angle is within the joint's limits.
         
         Args

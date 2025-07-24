@@ -363,7 +363,7 @@ class Kinematics():
         return ee_tf
 
 
-    def _calc_theta_1(self, wrist_pos_vector):
+    def _calc_theta_1(self, wrist_pos_vector) -> float:
         """Calculate the first joint variable defined in the robot's kinematic diagram.
 
         Given the wrist position vector, compute the robot's first joint variable using the atan2() function.
@@ -393,7 +393,7 @@ class Kinematics():
         return theta_1
 
 
-    def _calc_theta_3(self, wrist_pos_vector):
+    def _calc_theta_3(self, wrist_pos_vector) -> float:
         """Calculate the third joint variable defined in the robot's kinematic diagram.
         
         Given the wrist position vector, compute the robot's third joint variable using the cosine law. This value is required to calculate theta_2.
@@ -429,7 +429,7 @@ class Kinematics():
         return theta_3
 
 
-    def _calc_theta_2(self, wrist_pos_vector, theta_3):
+    def _calc_theta_2(self, wrist_pos_vector, theta_3) -> float:
         """Calculate the second joint variable defined in the robot's kinematic diagram.
         
         Given the wrist position vector and theta_3, compute the robot's second joint variable using the cosine law.
@@ -469,7 +469,7 @@ class Kinematics():
         return theta_2
 
 
-    def _calc_wrist_position_angles(self, tf_matrix):
+    def _calc_wrist_position_angles(self, tf_matrix) -> list[float]:
         """Calculate the joint angles that dictate the wrist position.
 
         The first 3 joint variables determine the position of the wrist origin.
@@ -496,7 +496,7 @@ class Kinematics():
         return wrist_pos_angles
 
 
-    def calc_all_joint_angles(self, tf_matrix):
+    def calc_all_joint_angles(self, tf_matrix) -> list[float]:
         """Calculate all target joint angles using inverse kinematics.
 
         Args
@@ -526,7 +526,7 @@ class Kinematics():
         return joint_angles
 
 
-    def _get_wrist_orientation_angles(self, joint_angles:list):
+    def _get_wrist_orientation_angles(self, joint_angles:list) -> list[float]:
         """Slice the list of joint angles to return only the wrist orientation angles (last 2 values).
         
         Args
