@@ -39,7 +39,8 @@ class ProtocolParser:
         
         At this point, the message has been stripped of all trailing null bytes.
         """
-        message_byte = incoming_message[0]
+        # message_byte = incoming_message[0]    DON'T DO THIS, it returns the INTEGER representation
+        message_byte = incoming_message[:1]     # Slicing returns the bytes representation, which is what we want.
 
         if (len(incoming_message) > 1):
             payload = incoming_message[1:]

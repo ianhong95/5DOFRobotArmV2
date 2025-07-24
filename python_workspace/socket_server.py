@@ -47,6 +47,8 @@ class SocketServer:
             self.message_handler.register_handler(MessageTypes.READ_JOINT_ANGLES, self.message_handler.handle_read_joint_angles)
             self.message_handler.register_handler(MessageTypes.UPDATE_EE_POSITION, self.message_handler.handle_update_EE_pos)
             self.message_handler.register_handler(MessageTypes.MOVE_X, self.message_handler.handle_move_x)
+            self.message_handler.register_handler(MessageTypes.MOVE_Y, self.message_handler.handle_move_y)
+            self.message_handler.register_handler(MessageTypes.MOVE_Z, self.message_handler.handle_move_z)
 
     def start(self):
         """Start the socket server and listen for client connections."""
@@ -97,7 +99,7 @@ class SocketServer:
             # Try to receive the number of bytes required to fill the frame
             packet = self.client.recv(self.BYTE_FRAME_LENGTH - len(data_store))
             data_store += packet
-        
+        print(f"raw data: {data_store}")
         stripped_data = data_store.rstrip(b'\0')    # Clear null byte padding
 
         return stripped_data

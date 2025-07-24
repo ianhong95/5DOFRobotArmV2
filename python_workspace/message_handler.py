@@ -74,3 +74,17 @@ class MessageHandler:
         x_distance = (struct.unpack('f', payload))[0]
 
         self.robot_arm.move_x(x_distance)
+
+    def handle_move_y(self, payload: bytes) -> bytes:
+        """Move in the y direction by a specified distance from the current position."""
+        
+        y_distance = (struct.unpack('f', payload))[0]
+
+        self.robot_arm.move_y(y_distance)
+
+    def handle_move_z(self, payload: bytes) -> bytes:
+        """Move in the z direction by a specified distance from the current position."""
+        
+        z_distance = (struct.unpack('f', payload))[0]
+
+        self.robot_arm.move_z(z_distance)
