@@ -6,7 +6,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(
 #  ${QT_VERSION}
-  Qt6
+  Qt5
   COMPONENTS Core Gui Widgets Svg
   REQUIRED)
 # -------------------

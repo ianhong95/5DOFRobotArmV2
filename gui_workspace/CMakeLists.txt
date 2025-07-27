@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(robot_arm_gui VERSION 0.1 LANGUAGES CXX)
+project(gui_workspace VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(OpenCV REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
 set(PROJECT_SOURCES
@@ -21,32 +22,36 @@ set(PROJECT_SOURCES
         mainwindow.ui
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 5)
-    qt_add_executable(robot_arm_gui
-        MANUAL_FINALIZATION
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(gui_workspace
         ${PROJECT_SOURCES}
+        protocolparser.h protocolparser.cpp
+        messagehandler.h messagehandler.cpp
+        protocolconstants.h
+        messagetypes.h
+        clienttypes.h
     )
 # Define target properties for Android with Qt 6 as:
-#    set_property(TARGET robot_arm_gui APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#    set_property(TARGET gui_workspace APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(robot_arm_gui SHARED
+        add_library(gui_workspace SHARED
             ${PROJECT_SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(robot_arm_gui
+        qt_add_executable(gui_workspace
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(robot_arm_gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-set_target_properties(robot_arm_gui PROPERTIES
+set_target_properties(gui_workspace PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -65,12 +70,9 @@ set(BREEZE_STYLES all CACHE STRING "The styles to include in our stylesheets.")
 include(breeze)
 
 # add_executable(myapp WIN32 MACOSX_BUNDLE "main.cpp")
-target_link_libraries(robot_arm_gui PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network)
+target_include_directories(gui_workspace PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network ${OpenCV_LIBS})
 
-install(TARGETS robot_arm_gui
+install(TARGETS gui_workspace
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-if(QT_VERSION_MAJOR EQUAL 5)
-    qt_finalize_executable(robot_arm_gui)
-endif()

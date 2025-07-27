@@ -16,3 +16,5 @@ enum_class_explanation.md
 .gitignore
 socket_server_backup.py
 api_logs.log
+gui_workspace/build
+gui_workspace/CMakeLists.txt.user
