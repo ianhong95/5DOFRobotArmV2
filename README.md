@@ -36,3 +36,32 @@ I wrote a binary protocol to manage the communication between the Python server 
 - A `ProtocolParser` for encoding/decoding messages.
 - The Qt application uses a signal/slot mechanism to relate user interactions with functions. For example, sending a `HOME` command in the client will also emit a signal to read joint angles, and the GUI will react to this signal by populating/updating the joint angle values displayed in spinboxes.
 
+## Building The Project
+1. Clone this repository: `git clone https://github.com/ianhong95/5DOFRobotArmV2`
+2. Ensure that Python essentials are installed:  
+    `sudo apt update && install python3.12-dev build-essential`
+3. Set up Python virtual environment and activate it:  
+    `sudo apt update`  
+    `sudo apt install python-venv`  
+    `python3 -m venv venv`  
+    `source venv/bin/activate`  
+4. Install dependencies: `python install -r requirements.txt`
+5. Give yourself permission to access the serial port (add to dialout group).  
+    `sudo usermod -aG dialout your_username`
+
+### Building Qt Development Environment
+1. Install basic requirements for Qt:  
+    `sudo apt-get install build-essential libgl1-mesa-dev`
+2. Install Qt Creator using the online installer for Linux (requires a Qt account):  
+    https://doc.qt.io/qt-6/get-and-install-qt.html
+3. Go through the installer and make sure to install Qt Creator.
+4. The stylesheet `breeze` requires Qt5 dependencies:  
+    - `sudo apt install qtbase5-dev qtbase5-dev-tools libqt5svg5-dev`
+    - Navigating to the `build` directory, then run:  
+        `cmake -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 ..`
+5. Install opencv and rerun cmake:  
+    `sudo apt install libopencv-dev`  
+    `cmake ..`  
+6. Run Qt Creator: `qtcreator &`
+7. Click on `Open Project` and open the `CMakeLists.txt` file in the project directory.
+8. Go through the rest of the configurations.
