@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     // videoLabel = new QLabel(this);
 
     // Open the video stream (adjust the string as needed)
-    cap.open("tcp://robot-pi.local:60001", cv::CAP_FFMPEG);
+    cap.open("tcp://127.0.0.1:60001", cv::CAP_FFMPEG);
 
     // Create and start timer
     timer = new QTimer(this);
@@ -76,7 +76,7 @@ void MainWindow::on_J1SpinBox_valueChanged(double arg1) {
 
 void MainWindow::on_connectButton_clicked() {
     if (client->connectionFlag == false) {
-        client->connectToServer("robot-pi.local", 61234);
+        client->connectToServer("127.0.0.1", 61234);
     }
     else {
         client->disconnectFromServer();

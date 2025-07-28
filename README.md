@@ -1,7 +1,9 @@
 # 5 DOF ROBOT ARM
 
+![!\[alt text\](image-1.png)](assets/robot_arm_1.png)
+
 ## Overview
-This is a hobby project where I designed and built a custom 5 DOF 3D printed robot arm, as well as a graphical user interface (GUI) to control the robot arm. The purpose is to explore communication protocols, robot kinematics, and learn design patterns (among many other concepts).  
+This is a hobby project where I designed and built a custom 5 DOF 3D printed robot arm, as well as a graphical user interface (GUI) to control the robot arm. The purpose is to explore communication protocols, robot kinematics, and learn design patterns (among many other concepts). This project is still very much a work in progress; I have many features in mind.
 
 ## Hardware
 The robot uses Feetech STS3215 (30kg) serial bus servo motors, which provide more control and feedback than traditional hobby servo motors which often only allow position control (no feedback at all). The serial bus servo motors can be daisy-chained using cables with Molex 5264 connectors, which reduce the amount of wiring clutter. The low-level control of the motors is programmed on an ESP32 module using Feetech's Arduino libraries.  
@@ -31,6 +33,9 @@ I wrote a binary protocol to manage the communication between the Python server 
 - To send messages (such as joint angle feedback and message responses) to the client, an `encode_message` method in the `ProtocolParser` class is used to convert the payload into a byte array
 
 ### GUI/Client side (C++)
+
+![!\[alt text\](image-2.png)](assets/GUI_1.png)
+
 - The client uses the same class architecture as the server.
 - A `MessageHandler` class is used to route messages based on the message type.
 - A `ProtocolParser` for encoding/decoding messages.
