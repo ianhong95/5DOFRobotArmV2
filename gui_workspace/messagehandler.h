@@ -35,6 +35,9 @@ private:
     void handleDisable(std::vector<uint8_t> payload, DataVariant& output);
     void handleReadJointAngles(std::vector<uint8_t> payload, DataVariant& output);
     void handleUpdateEEPos(std::vector<uint8_t> payload, DataVariant& output);
+    void handleSaveCurrentPosition(std::vector<uint8_t> payload, DataVariant& output);
+    void handleGoToPosition(std::vector<uint8_t> payload, DataVariant& output);
+    void handlePlayBack(std::vector<uint8_t> payload, DataVariant& output);
 
     std::unordered_map<ProtocolConstants::RobotMessageType, HandlerFunction> message_handlers;
 

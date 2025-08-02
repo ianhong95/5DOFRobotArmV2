@@ -39,6 +39,15 @@ void MessageHandler::setupHandlers() {
     MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::UpdateEEPos, [this](std::vector<uint8_t> payload, DataVariant& output) {
         this->handleUpdateEEPos(payload, output);
     });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SaveCurrentPosition, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSaveCurrentPosition(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::GoToPosition, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleGoToPosition(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::PlayBack, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handlePlayBack(payload, output);
+    });
 }
 
 void MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType messageType, MessageHandler::HandlerFunction handler) {
@@ -101,4 +110,16 @@ void MessageHandler::handleUpdateEEPos(std::vector<uint8_t> payload, DataVariant
     std::memcpy(xyzPosition.coordinates.data(), payload.data(), xyzPosition.coordinates.size() * sizeof(float));
 
     output = xyzPosition;
+}
+
+void MessageHandler::handleSaveCurrentPosition(std::vector<uint8_t> payload, DataVariant &output) {
+
+}
+
+void MessageHandler::handleGoToPosition(std::vector<uint8_t> payload, DataVariant &output) {
+
+}
+
+void MessageHandler::handlePlayBack(std::vector<uint8_t> payload, DataVariant &output) {
+
 }

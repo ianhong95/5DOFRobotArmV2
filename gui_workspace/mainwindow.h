@@ -12,6 +12,8 @@
 #include <opencv2/opencv.hpp>
 
 #include "robotarmclient.h"
+#include "teachpanel.h"
+#include "ui_mainwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,6 +31,7 @@ private:
     Ui::MainWindow *ui;
     RobotArmClient* client;
     ProtocolParser* parser;
+    TeachPanel* teachPanel;
 
 
     QLabel *videoLabel;
@@ -72,6 +75,9 @@ private slots:
     void handleClientConnError(const QString &errorMsg);
     void on_updJointAnglesButton_clicked();
     void on_updXYZButton_clicked();
+
+    // TEACHING
+    void saveCurrentPositionRequested();
 };
 
 #endif // MAINWINDOW_H

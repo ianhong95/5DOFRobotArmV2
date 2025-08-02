@@ -62,7 +62,7 @@ I wrote a binary protocol to manage the communication between the Python server 
 3. Go through the installer and make sure to install Qt Creator.
 4. The stylesheet `breeze` requires Qt5 dependencies:  
     - `sudo apt install qtbase5-dev qtbase5-dev-tools libqt5svg5-dev`
-    - Navigating to the `build` directory, then run:  
+    - Navigate to the `build` directory, then run:  
         `cmake -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 ..`
 5. Install opencv and rerun cmake:  
     `sudo apt install libopencv-dev`  

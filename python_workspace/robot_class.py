@@ -52,6 +52,8 @@ class RobotArm:
     disable_servo(id): Disable the servo with the specified ID. Passing an ID of 0 will disable all servos.
     """
 
+    EE_SERVO_ID = 6
+
     def __init__(self):
         # Load kinematics library class
         self._k = Kinematics("config.json")
@@ -177,7 +179,7 @@ class RobotArm:
         # Close file when finished
         f.close()
 
-    def _start_connection(self):
+    def _start_connection(self) -> PortHandler:
         """Begin serial communication with the robot.
         
         Serial communication parameters are defined in config.json. Ensure that the robot's "serial forwarding" setting is turned on.
@@ -698,7 +700,7 @@ class RobotArm:
             A list of target angles in radians.
         """
 
-        self._check_if_moving()
+        # self._check_if_moving()
 
         servo_positions = [self._angle_to_servo_pos(angle, "rad") for angle in angles]
         ids = [joint["servo_id"] for joint in self.joint_info.values()]
@@ -820,7 +822,7 @@ class RobotArm:
     # BASIC MOTIONS
     # =============
     
-    def move_x(self, x: float, delay=None):
+    def move_x(self, x: float, delay=None) -> list[float]:
         """Linear move in the x direction.
         
         Args
@@ -841,10 +843,12 @@ class RobotArm:
         self.sync_write_angles(target_joint_angles)
         time.sleep(delay)
 
-        return self
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+
+        return new_angles
 
 
-    def move_y(self, y: float, delay=None):
+    def move_y(self, y: float, delay=None) -> list[float]:
         """
         Linear move in the y direction.
         
@@ -866,10 +870,13 @@ class RobotArm:
         self.sync_write_angles(target_joint_angles)
         time.sleep(delay)
 
-        return self
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+
+
+        return new_angles
     
 
-    def move_z(self, z: float, delay=None):
+    def move_z(self, z: float, delay=None) -> list[float]:
         """Linear move in the z direction.
         
         Args
@@ -890,18 +897,17 @@ class RobotArm:
         self.sync_write_angles(target_joint_angles)
         time.sleep(delay)
 
-        return self
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+
+        return new_angles
     
 
-    def home(self, delay=None):
+    def home(self, delay=None) -> list[float]:
         """Go to the home position defined in config.json.
         
         This method sets a manual target angle to each servo, so the arm must be calibrated beforehand.
-        
-        Args
-        ----
-        delay: float
-            Delay in ms after the move completes.
+
+        Returns a list of updated joint angles in degrees.
 
         TODO: Properly implement the delay in the library.
         """
@@ -921,3 +927,36 @@ class RobotArm:
         new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
 
         return new_angles
+    
+    # ==========================
+    # END EFFECTOR MANIPULATIONS
+    # ==========================
+    
+    def rel_pitch(self, step: float, delay=None) -> list[float]:
+        """Pitch the end effector upward by a certain angular distance.
+        
+        This method uses direct angle control to pitch the wrist to a relative angle, then 
+        recomputes the robot's pose.
+
+        Pass an angle in degrees.
+
+        Returns a list of updated joint angles in degrees.
+        """
+
+        if delay==None:
+            delay = self.MOVE_DELAY
+
+        new_angle = self.joint_info[4]["angle"] + radians(step)
+        self.write_angle(4, degrees(new_angle))
+
+        self.joint_info[4]["angle"] = new_angle
+
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+
+        return new_angles
+    
+    def open_gripper(self, delay=None):
+        pass
+
+    def close_gripper(self, delay=None):
+        pass

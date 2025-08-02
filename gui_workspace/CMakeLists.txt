@@ -13,6 +13,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(OpenCV REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 set(PROJECT_SOURCES
         robotarmclient.h
         robotarmclient.cpp
@@ -20,42 +22,21 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
-)
-
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(gui_workspace
-        ${PROJECT_SOURCES}
+        teachpanel.h teachpanel.cpp teachpanel.ui
         protocolparser.h protocolparser.cpp
         messagehandler.h messagehandler.cpp
         protocolconstants.h
         messagetypes.h
         clienttypes.h
+)
+
+qt_add_executable(gui_workspace
+        ${PROJECT_SOURCES}
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET gui_workspace APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-else()
-    if(ANDROID)
-        add_library(gui_workspace SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        qt_add_executable(gui_workspace
-            ${PROJECT_SOURCES}
-        )
-    endif()
-endif()
 
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 set_target_properties(gui_workspace PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
 
@@ -69,7 +50,6 @@ set(BREEZE_STYLES all CACHE STRING "The styles to include in our stylesheets.")
 
 include(breeze)
 
-# add_executable(myapp WIN32 MACOSX_BUNDLE "main.cpp")
 target_include_directories(gui_workspace PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network ${OpenCV_LIBS})
 

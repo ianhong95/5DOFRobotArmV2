@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     client = new RobotArmClient(this);
     parser = new ProtocolParser();
+    // teachPanel = qobject_cast<TeachPanel*>(ui->teachPanel);
+    teachPanel = ui->teachPanel;
 
     // Create label to display video
     // videoLabel = new QLabel(this);
@@ -41,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(client, &RobotArmClient::jointAnglesRecvd, this, &MainWindow::readJointAngles);
     connect(client, &RobotArmClient::xyzPositionRecvd, this, &MainWindow::readXYZPosition);
 
+    connect(teachPanel, &TeachPanel::saveCurrentPositionRequested, this, &MainWindow::saveCurrentPositionRequested);
+
     // Assign values to member variables
     connErrorMsg = QString::fromUtf8("Error: No socket connection.");
 }
@@ -48,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {
     delete ui;
     delete client;
+    delete parser;
     cap.release();
 }
 
@@ -239,6 +244,8 @@ void MainWindow::readJointAngles(JointAngles jointAngles) {
     ui->J3SpinBox->setValue(MainWindow::jointAngles[2]);
     ui->J4SpinBox->setValue(MainWindow::jointAngles[3]);
     ui->J5SpinBox->setValue(MainWindow::jointAngles[4]);
+
+    ui->debugTextBrowser->append("Joint angles updated.");
 }
 
 void MainWindow::readXYZPosition(XYZPosition xyzPosition) {
@@ -249,6 +256,20 @@ void MainWindow::readXYZPosition(XYZPosition xyzPosition) {
     ui->xSpinBox->setValue(MainWindow::xyzPosition[0]);
     ui->ySpinBox->setValue(MainWindow::xyzPosition[1]);
     ui->zSpinBox->setValue(MainWindow::xyzPosition[2]);
+
+    ui->debugTextBrowser->append("End effector position updated.");
+}
+
+/* ==============
+ * TEACHING
+ * ========
+ */
+
+// Save the robot's current physical position.
+void MainWindow::saveCurrentPositionRequested() {    
+    std::vector<uint8_t> savePositionMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::SaveCurrentPosition);
+    client->sendMessage(savePositionMessage);
+    ui->debugTextBrowser->append("Current physical position has been saved.");
 }
 
 /* ===========
@@ -287,7 +308,6 @@ void MainWindow::on_updJointAnglesButton_clicked()
     ui->J4SpinBox->setValue(MainWindow::jointAngles[3]);
     ui->J5SpinBox->setValue(MainWindow::jointAngles[4]);
 }
-
 
 void MainWindow::on_updXYZButton_clicked()
 {

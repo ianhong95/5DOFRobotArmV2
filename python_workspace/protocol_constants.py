@@ -15,6 +15,12 @@ class MessageTypes:
     MOVE_J3 = b'\x20'
     MOVE_J4 = b'\x21'
     MOVE_J5 = b'\x22'
+    SAVE_CURRENT_POSITION = b'\x28'
+    SAVE_SEQUENCE = b'\x29'
+    GO_TO_POSITION = b'\x2A'
+    PLAY_BACK = b'\x2B'
+    PLAY_SEQUENCE = b'\x2C'
+    
 
 class ResponseTypes:
     OK = b'\x64'

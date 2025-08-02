@@ -108,3 +108,11 @@ class MessageHandler:
         z_distance = (struct.unpack('f', payload))[0]
 
         self.robot_arm.move_z(z_distance)
+
+    def handle_save_current_position(self, payload: bytes) -> bytes:
+        """Save the current joint positions."""
+
+        joint_angles_radians = self.robot_arm.read_joint_angle(0)
+        joint_angles_degrees = [round(degrees(joint_angle), 2) for joint_angle in joint_angles_radians]
+
+        print("Saved current position!")
