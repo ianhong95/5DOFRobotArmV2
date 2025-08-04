@@ -15,24 +15,34 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(PROJECT_SOURCES
-        robotarmclient.h
-        robotarmclient.cpp
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        teachpanel.h teachpanel.cpp teachpanel.ui
-        protocolparser.h protocolparser.cpp
-        messagehandler.h messagehandler.cpp
-        protocolconstants.h
-        messagetypes.h
-        clienttypes.h
+set(SOURCES
+    core/robotarmclient.cpp
+    core/main.cpp
+    core/mainwindow.cpp
+    communication/protocolparser.cpp
+    communication/messagehandler.cpp
+    ui/teachpanel.cpp
+    ui/models/positiontablemodel.cpp
 )
 
-qt_add_executable(gui_workspace
-        ${PROJECT_SOURCES}
-    )
+set(HEADERS
+    communication/protocolconstants.h
+    communication/messagetypes.h
+    communication/clienttypes.h
+    core/robotarmclient.h
+    core/mainwindow.h
+    communication/protocolparser.h
+    communication/messagehandler.h
+    ui/teachpanel.h
+    ui/models/positiontablemodel.h
+)
+
+set(UI_FILES
+    core/mainwindow.ui
+    ui/teachpanel.ui
+)
+
+qt_add_executable(gui_workspace ${SOURCES} ${HEADERS} ${UI_FILES})
 
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
@@ -47,10 +57,14 @@ message(STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
 set(QT_VERSION Qt6 CACHE STRING "The Qt version framework to use (Qt5 or Qt6).")
 set(BREEZE_EXTENSIONS all CACHE STRING "The extensions to include in our stylesheets.")
 set(BREEZE_STYLES all CACHE STRING "The styles to include in our stylesheets.")
-
 include(breeze)
 
-target_include_directories(gui_workspace PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(gui_workspace PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui
+    )
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network ${OpenCV_LIBS})
 
 install(TARGETS gui_workspace

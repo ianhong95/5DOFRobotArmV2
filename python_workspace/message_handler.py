@@ -86,7 +86,7 @@ class MessageHandler:
         xyz_position = (self.robot_arm.get_ee_pos()).tolist()
         rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
 
-        return (ProtocolParser.encode_message(MessageTypes.UPDATE_EE_POSITION, rounded_xyz_position))
+        return ProtocolParser.encode_message(MessageTypes.UPDATE_EE_POSITION, rounded_xyz_position)
     
     def handle_move_x(self, payload: bytes) -> bytes:
         """Move in the x direction by a specified distance from the current position."""
@@ -111,8 +111,19 @@ class MessageHandler:
 
     def handle_save_current_position(self, payload: bytes) -> bytes:
         """Save the current joint positions."""
+        test_id = [0]
 
         joint_angles_radians = self.robot_arm.read_joint_angle(0)
         joint_angles_degrees = [round(degrees(joint_angle), 2) for joint_angle in joint_angles_radians]
 
-        print("Saved current position!")
+        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+
+        output = test_id + xyz_position
+
+        print(f"Saved position: {output}")
+
+        return ProtocolParser.encode_message(MessageTypes.SAVE_CURRENT_POSITION, output)
+    
+    def handle_move_to_position(self, payload: bytes) -> bytes:
+        """Move to the position at a given index."""
+        pass

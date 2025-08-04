@@ -29,9 +29,9 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    RobotArmClient* client;
-    ProtocolParser* parser;
-    TeachPanel* teachPanel;
+    RobotArmClient *client;
+    ProtocolParser *parser;
+    TeachPanel *teachPanel;
 
 
     QLabel *videoLabel;
@@ -45,8 +45,8 @@ private:
 
 private slots:
     // I/O HANDLING
-    void readJointAngles(JointAngles jointAngles);
-    void readXYZPosition(XYZPosition xyzPosition);
+    void updateJointAngles(JointAngles jointAngles);
+    void updateXYZPosition(XYZPosition xyzPosition);
 
     // CONNECTION HANDLING
     void handleConnChanged(bool connected);
@@ -78,6 +78,9 @@ private slots:
 
     // TEACHING
     void saveCurrentPositionRequested();
+    void addSavedPosition(SavedXYZPosition savedPositionData);
+    void moveToPosition(int positionIndex);
+
 };
 
 #endif // MAINWINDOW_H

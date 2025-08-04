@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 
 #include <QTcpSocket>
+#include <QAbstractItemModel>
 
 #include "robotarmclient.h"
 #include "protocolconstants.h"
@@ -24,11 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     client = new RobotArmClient(this);
     parser = new ProtocolParser();
-    // teachPanel = qobject_cast<TeachPanel*>(ui->teachPanel);
     teachPanel = ui->teachPanel;
-
-    // Create label to display video
-    // videoLabel = new QLabel(this);
 
     // Open the video stream (adjust the string as needed)
     cap.open("tcp://127.0.0.1:60001", cv::CAP_FFMPEG);
@@ -40,10 +37,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(client, &RobotArmClient::connError, this, &MainWindow::handleClientConnError);
     connect(client, &RobotArmClient::connStatusChanged, this, &MainWindow::handleConnChanged);
-    connect(client, &RobotArmClient::jointAnglesRecvd, this, &MainWindow::readJointAngles);
-    connect(client, &RobotArmClient::xyzPositionRecvd, this, &MainWindow::readXYZPosition);
+    connect(client, &RobotArmClient::jointAnglesRecvd, this, &MainWindow::updateJointAngles);
+    connect(client, &RobotArmClient::xyzPositionRecvd, this, &MainWindow::updateXYZPosition);
+    connect(client, &RobotArmClient::savePosRespRecvd, this, &MainWindow::addSavedPosition);
 
     connect(teachPanel, &TeachPanel::saveCurrentPositionRequested, this, &MainWindow::saveCurrentPositionRequested);
+    connect(teachPanel, &TeachPanel::moveToPositionRequested, this, &MainWindow::moveToPosition);
 
     // Assign values to member variables
     connErrorMsg = QString::fromUtf8("Error: No socket connection.");
@@ -234,7 +233,7 @@ void MainWindow::on_clearDebugButton_clicked() {
  * ============
  */
 
-void MainWindow::readJointAngles(JointAngles jointAngles) {
+void MainWindow::updateJointAngles(JointAngles jointAngles) {
     for (int i = 0; i < 5; ++i) {
         MainWindow::jointAngles[i] = jointAngles.angles[i];
     }
@@ -248,7 +247,7 @@ void MainWindow::readJointAngles(JointAngles jointAngles) {
     ui->debugTextBrowser->append("Joint angles updated.");
 }
 
-void MainWindow::readXYZPosition(XYZPosition xyzPosition) {
+void MainWindow::updateXYZPosition(XYZPosition xyzPosition) {
     for (int i = 0; i < 3; ++i) {
         MainWindow::xyzPosition[i] = xyzPosition.coordinates[i];
     }
@@ -260,22 +259,45 @@ void MainWindow::readXYZPosition(XYZPosition xyzPosition) {
     ui->debugTextBrowser->append("End effector position updated.");
 }
 
-/* ==============
+/* ========
  * TEACHING
- * ========
- */
+ * ======== */
 
 // Save the robot's current physical position.
-void MainWindow::saveCurrentPositionRequested() {    
+void MainWindow::saveCurrentPositionRequested() {
     std::vector<uint8_t> savePositionMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::SaveCurrentPosition);
     client->sendMessage(savePositionMessage);
-    ui->debugTextBrowser->append("Current physical position has been saved.");
+    ui->debugTextBrowser->append("Requesting server to save position data.");
 }
 
-/* ===========
+void MainWindow::addSavedPosition(SavedXYZPosition savedPositionData) {
+    SavedPosition savedPosition;
+    savedPosition.index = savedPositionData.index;
+    savedPosition.alias = "None";
+    savedPosition.x = savedPositionData.coordinates.coordinates[0];
+    savedPosition.y = savedPositionData.coordinates.coordinates[1];
+    savedPosition.z = savedPositionData.coordinates.coordinates[2];
+
+    ui->debugTextBrowser->append(QString::number(savedPosition.x));
+    ui->debugTextBrowser->append(QString::number(savedPosition.y));
+    ui->debugTextBrowser->append(QString::number(savedPosition.z));
+
+    teachPanel->positionTableModel->addRow(savedPosition);
+}
+
+void MainWindow::moveToPosition(int positionIndex) {
+    std::vector<int> positionIndexVector;
+    positionIndexVector.insert(positionIndexVector.begin(), positionIndex);
+
+    std::vector<uint8_t> moveToPositionMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::MoveToPosition, positionIndexVector);
+    client->sendMessage(moveToPositionMessage);
+
+    ui->debugTextBrowser->append("Requesting robot to move to selected position.");
+}
+
+/* ==========
  * CONNECTION
- * ==========
- */
+ * ========== */
 
 void MainWindow::handleConnChanged(bool connected) {
     if (connected == true) {
@@ -298,8 +320,11 @@ void MainWindow::handleClientConnError(const QString &errorMsg) {
     ui->debugTextBrowser->append("Could not establish connection to socket. " + errorMsg);
 }
 
-void MainWindow::on_updJointAnglesButton_clicked()
-{
+/* ==================
+ * FETCHING UPDATES
+ * ================== */
+
+void MainWindow::on_updJointAnglesButton_clicked() {
     std::vector<uint8_t> readJointAnglesMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::ReadJointAngles);
     client->sendMessage(readJointAnglesMessage);
     ui->J1SpinBox->setValue(MainWindow::jointAngles[0]);
@@ -309,8 +334,7 @@ void MainWindow::on_updJointAnglesButton_clicked()
     ui->J5SpinBox->setValue(MainWindow::jointAngles[4]);
 }
 
-void MainWindow::on_updXYZButton_clicked()
-{
+void MainWindow::on_updXYZButton_clicked() {
     std::vector<uint8_t> updateXYZMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::UpdateEEPos);
     client->sendMessage(updateXYZMessage);
     ui->xSpinBox->setValue(MainWindow::xyzPosition[0]);

@@ -59,6 +59,7 @@ class SocketServer:
             self.message_handler.register_handler(MessageTypes.MOVE_Y, self.message_handler.handle_move_y)
             self.message_handler.register_handler(MessageTypes.MOVE_Z, self.message_handler.handle_move_z)
             self.message_handler.register_handler(MessageTypes.SAVE_CURRENT_POSITION, self.message_handler.handle_save_current_position)
+            self.message_handler.register_handler(MessageTypes.MOVE_TO_POSITION, self.message_handler.handle_move_to_position)
 
     def start(self):
         """Start the socket server and listen for client connections."""

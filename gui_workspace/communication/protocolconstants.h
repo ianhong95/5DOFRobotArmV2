@@ -26,7 +26,7 @@ namespace ProtocolConstants {
         MoveJ5 = 0x22,                  // 34
         SaveCurrentPosition = 0x28,     // 40
         SaveSequence = 0x29,            // 41
-        GoToPosition = 0x2A,            // 42
+        MoveToPosition = 0x2A,            // 42
         PlayBack = 0x2B,                // 43
         PlaySequence = 0x2C,            // 44
     };
@@ -47,9 +47,9 @@ namespace ProtocolConstants {
         MoveJ3 = 3,
         MoveJ4 = 3,
         MoveJ5 = 3,
-        SaveCurrentPosition = 2,
+        SaveCurrentPosition = 18,
         SaveSequence = 32,  // Message type, response, sequence ID, max 29 positions
-        GoToPosition = 3,
+        MoveToPosition = 6,
         PlayBack = 32,       // Message type, response, max 30 positions
         PlaySequence = 3,
     };

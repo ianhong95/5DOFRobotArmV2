@@ -57,6 +57,21 @@ std::vector<uint8_t> ProtocolParser::encodeMessage(ProtocolConstants::RobotMessa
     return messageByteArray;
 }
 
+// Encode a vector of int
+std::vector<uint8_t> ProtocolParser::encodeMessage(ProtocolConstants::RobotMessageType messageType, std::vector<int> payload) {
+    uint8_t encodedMessageType = static_cast<uint8_t>(messageType);
+    std::vector<uint8_t> messageByteArray;
+
+    messageByteArray.resize(1 + payload.size() * sizeof(int));
+
+    messageByteArray.insert(messageByteArray.begin(), encodedMessageType);
+    memcpy(messageByteArray.data() + 1, payload.data(), payload.size() * sizeof(int));
+
+    messageByteArray.resize(ProtocolConstants::DATA_FRAME_LENGTH, ProtocolConstants::PADDING_CHAR);     // Pad with null bytes
+
+    return messageByteArray;
+}
+
 // Mainly for reading data from the Python socket server
 void ProtocolParser::decodeMessage(
     std::vector<uint8_t> inputData,
@@ -94,6 +109,7 @@ constexpr size_t ProtocolParser::getMessageLength(ProtocolConstants::RobotMessag
         case MsgT::Disable: return static_cast<size_t>(MsgL::Disable);
         case MsgT::ReadJointAngles: return static_cast<size_t>(MsgL::ReadJointAngles);
         case MsgT::UpdateEEPos: return static_cast<size_t>(MsgL::UpdateEEPos);
+        case MsgT::SaveCurrentPosition: return static_cast<size_t>(MsgL::SaveCurrentPosition);
         default:
             std::cout << "No length found!";
             return static_cast<size_t>(0);

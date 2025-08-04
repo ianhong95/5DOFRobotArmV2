@@ -11,7 +11,7 @@ class ProtocolParser:
     """A class to encode/decode messages according to the protocol defined in ProtocolConstants."""
 
     @staticmethod
-    def encode_message(message_type: MessageTypes, payload: list[float] = []) -> bytes:
+    def encode_message(message_type: MessageTypes, payload: list[float | int] = []) -> bytes:
         """Encode a message given a message type and payload.
         
         The message is padded to 64 bytes regardless of the payload size.

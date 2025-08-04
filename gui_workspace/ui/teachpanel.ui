@@ -65,6 +65,21 @@
      <height>231</height>
     </rect>
    </property>
+   <property name="dragEnabled">
+    <bool>true</bool>
+   </property>
+   <property name="dragDropMode">
+    <enum>QAbstractItemView::DragDropMode::InternalMove</enum>
+   </property>
+   <property name="defaultDropAction">
+    <enum>Qt::DropAction::MoveAction</enum>
+   </property>
+   <property name="selectionMode">
+    <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+   </property>
+   <property name="selectionBehavior">
+    <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+   </property>
   </widget>
  </widget>
  <resources/>

@@ -1,3 +1,7 @@
+/* INCOMING MESSAGE MANAGER
+ *
+ * */
+
 #include "robotarmclient.h"
 #include "protocolparser.h"
 
@@ -44,6 +48,9 @@ void RobotArmClient::setupSignals() {
     });
     RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::Disable, [this](DataVariant signalData) {
         this->emitDisable(signalData);
+    });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SaveCurrentPosition, [this](DataVariant signalData) {
+        this->emitSavePosRespRecvd(signalData);
     });
 }
 
@@ -140,7 +147,6 @@ void RobotArmClient::emitXYZPositionRecvd(DataVariant signalData) {
 
 void RobotArmClient::emitHome(DataVariant signalData) {
     JointAnglesAndPosition anglesAndPosition = std::get<JointAnglesAndPosition>(signalData);
-
     emit jointAnglesRecvd(anglesAndPosition.angles);
     emit xyzPositionRecvd(anglesAndPosition.coordinates);
 }
@@ -148,6 +154,11 @@ void RobotArmClient::emitHome(DataVariant signalData) {
 void RobotArmClient::emitDisable(DataVariant signalData) {}
 
 void RobotArmClient::emitDisconnect(DataVariant signalData) {}
+
+void RobotArmClient::emitSavePosRespRecvd(DataVariant signalData) {
+    SavedXYZPosition savedXYZPositionData = std::get<SavedXYZPosition>(signalData);
+    emit savePosRespRecvd(savedXYZPositionData);
+}
 
 /* ===============
  * ERROR HANDLING

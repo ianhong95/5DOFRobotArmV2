@@ -31,12 +31,17 @@ public:
     std::vector<uint8_t> encodeMessage(
         ProtocolConstants::RobotMessageType messageType,
         std::vector<uint8_t> payload
-        );
+    );
 
     std::vector<uint8_t> encodeMessage(
         ProtocolConstants::RobotMessageType messageType,
         std::vector<float> payload
-        );
+    );
+
+    std::vector<uint8_t> encodeMessage(
+        ProtocolConstants::RobotMessageType messageType,
+        std::vector<int> payload
+    );
 
     void decodeMessage(
         std::vector<uint8_t> data,

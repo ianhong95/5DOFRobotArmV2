@@ -5,6 +5,7 @@
 #include <variant>
 #include <stdint.h>
 #include <vector>
+#include <string>
 
 #include <QByteArray>
 
@@ -35,13 +36,20 @@ struct JointAnglesAndPosition {
     XYZPosition coordinates;
 };
 
+struct SavedXYZPosition {
+    int index;
+    std::string alias;
+    XYZPosition coordinates;
+};
+
 using DataVariant = std::variant<
     Connect,
     Disconnect,
     Home,
     JointAngles,
     XYZPosition,
-    JointAnglesAndPosition
+    JointAnglesAndPosition,
+    SavedXYZPosition
 >;
 
 #endif // MESSAGETYPES_H

@@ -29,7 +29,6 @@ public:
 
     bool connectToServer(const QString host, quint16 port);
     void disconnectFromServer();
-    // void sendMessage(ProtocolConstants::RobotMessageType message, std::optional<uint8_t> payload = std::nullopt);
     void sendMessage(std::vector<uint8_t> fullMessage);
 
 private slots:
@@ -55,12 +54,14 @@ private:
     void emitHome(DataVariant signalData);
     void emitDisable(DataVariant signalData);
     void emitDisconnect(DataVariant signalData);
+    void emitSavePosRespRecvd(DataVariant signalData);
 
 signals:
     void connError(const QString &errorMsg);
     void connStatusChanged(bool connected);
     void jointAnglesRecvd(JointAngles jointAngles);
     void xyzPositionRecvd(XYZPosition xyzPosition);
+    void savePosRespRecvd(SavedXYZPosition xyzPosition);
 };
 
 #endif // ROBOTARMCLIENT_H

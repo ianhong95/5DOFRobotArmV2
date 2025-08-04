@@ -17,7 +17,7 @@ class MessageTypes:
     MOVE_J5 = b'\x22'
     SAVE_CURRENT_POSITION = b'\x28'
     SAVE_SEQUENCE = b'\x29'
-    GO_TO_POSITION = b'\x2A'
+    MOVE_TO_POSITION = b'\x2A'
     PLAY_BACK = b'\x2B'
     PLAY_SEQUENCE = b'\x2C'
     
