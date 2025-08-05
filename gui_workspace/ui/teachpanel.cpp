@@ -20,7 +20,6 @@ TeachPanel::~TeachPanel() {
 }
 
 void TeachPanel::on_saveCurrentButton_clicked() {
-    positionTableModel->addRow({0, "test", 1, 2, 3});
     emit getXYZPosition();
     emit saveCurrentPositionRequested();
 }

@@ -30,6 +30,25 @@ class ProtocolParser:
         return padded_message
     
     @staticmethod
+    def encode_save_message(message_type: MessageTypes, payload: list[float | int] = []) -> bytes:
+        """Encode a message given a message type and payload.
+        
+        The message is padded to 64 bytes regardless of the payload size.
+        TODO: Test for successful encoding and actually use the response.
+
+        Returns the padded message.
+        """
+        
+        packed_payload = struct.pack(f'<i3f', *payload)
+
+        data: bytes = message_type + ResponseTypes.OK + packed_payload
+
+        if len(data) < ProtocolConstants.FRAME_BUFFER_LENGTH:
+            padded_message = data.ljust(ProtocolConstants.FRAME_BUFFER_LENGTH, b'\x00')
+
+        return padded_message
+    
+    @staticmethod
     def encode_joint_angles(payload: list[float]) -> bytes:
         """Encode joint angles (degrees) to bytes, and prepends the READ_JOINT_ANGLES message type.
         

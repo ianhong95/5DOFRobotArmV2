@@ -115,8 +115,9 @@ void MessageHandler::handleUpdateEEPos(std::vector<uint8_t> payload, DataVariant
 void MessageHandler::handleSaveCurrentPosition(std::vector<uint8_t> payload, DataVariant &output) {
     XYZPosition xyzPosition;
 
-    int index = payload[0];
-    std::memcpy(xyzPosition.coordinates.data(), payload.data() + 1 * sizeof(int), xyzPosition.coordinates.size() * sizeof(float));
+    int index = 0;
+    std::memcpy(&index, payload.data(), sizeof(int));
+    std::memcpy(xyzPosition.coordinates.data(), payload.data() + sizeof(int), xyzPosition.coordinates.size() * sizeof(float));
 
     output = SavedXYZPosition{index, "", xyzPosition};
 }

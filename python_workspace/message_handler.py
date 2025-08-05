@@ -15,6 +15,7 @@ import numpy as np
 from protocol_constants import ProtocolConstants, MessageTypes
 from protocol_parser import ProtocolParser
 from robot_class import RobotArm
+from saved_positions_handler import SavedPositionsDB
 
 class MessageHandler:
     """A class for handling incoming messages and routing them to the appropriate handler method based on the message type."""
@@ -25,6 +26,7 @@ class MessageHandler:
 
         # Initialize robot arm instance
         self.robot_arm = RobotArm()
+        self.db = SavedPositionsDB()
 
     def register_handler(self, message_type: bytes, handler: Callable):
         """Register an entry to the message_handlers dictionary."""
@@ -111,18 +113,22 @@ class MessageHandler:
 
     def handle_save_current_position(self, payload: bytes) -> bytes:
         """Save the current joint positions."""
-        test_id = [0]
 
         joint_angles_radians = self.robot_arm.read_joint_angle(0)
         joint_angles_degrees = [round(degrees(joint_angle), 2) for joint_angle in joint_angles_radians]
 
         xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+        rounded_xyz_position = [round(coord, 2) for coord in xyz_position]
 
-        output = test_id + xyz_position
+        print(rounded_xyz_position + joint_angles_degrees)
+
+        new_row_id = self.db.add_row(rounded_xyz_position + joint_angles_degrees)
+
+        output = [new_row_id] + rounded_xyz_position
 
         print(f"Saved position: {output}")
 
-        return ProtocolParser.encode_message(MessageTypes.SAVE_CURRENT_POSITION, output)
+        return ProtocolParser.encode_save_message(MessageTypes.SAVE_CURRENT_POSITION, output)
     
     def handle_move_to_position(self, payload: bytes) -> bytes:
         """Move to the position at a given index."""
