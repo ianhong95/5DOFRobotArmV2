@@ -8,17 +8,19 @@ This is a hobby project where I designed and built a custom 5 DOF 3D printed rob
 ## Hardware
 The robot uses Feetech STS3215 (30kg) serial bus servo motors, which provide more control and feedback than traditional hobby servo motors which often only allow position control (no feedback at all). The serial bus servo motors can be daisy-chained using cables with Molex 5264 connectors, which reduce the amount of wiring clutter. The low-level control of the motors is programmed on an ESP32 module using Feetech's Arduino libraries.  
 
-High-level robot controls are hosted on a Raspberry Pi 4B, while the GUI was developed on Ubuntu in an x86 virtual machine.
+The communication server and the client run on an N95 mini PC.
 
 ## Software  
-The Raspberry Pi 4B hosts the following components:
+The backend consists of:
 - Socket server
 - Message handler
 - Protocol parser
 - Robot class (high level control library)
 - Kinematics class (computation library)
-  
-The GUI application is written using the Qt framework and designed using Qt Creator. A 3rd part library, breeze, was used for styling.
+- SQLite database and interface
+- Saved positions handler
+
+The frontend GUI application is written using the Qt framework and designed using Qt Creator. A 3rd part library, breeze, was used for styling.
 
 ## High Level Project Architecture - Binary Protocol
 I wrote a binary protocol to manage the communication between the Python server and the C++ client via TCP connection. The server and client communicate using streams of byte arrays that contain various pieces of information such as the type of message being sent (`CONNECT`, `HOME`, `DISABLE`, `MOVE_X`, etc.) and the payload (such as Cartesian coordinates or joint angles). They share a common set of definitions that they both understand, which makes this system language-agnostic.
@@ -31,6 +33,7 @@ I wrote a binary protocol to manage the communication between the Python server 
 - A socket server listens for incoming messages. When messages are received, the socket server continues to accumulate bytes until the buffer is full (64 bytes).
 - The message is passed to a `MessageHandler` class, which calls a `decode_message` method from the `ProtocolParser` class to extract the message type and payload, then the `MessageHandler` class calls the `message_handler` method that corresponds to the message type that was received.
 - To send messages (such as joint angle feedback and message responses) to the client, an `encode_message` method in the `ProtocolParser` class is used to convert the payload into a byte array
+- When positions are saved, they are stored in a serverless database and recalled by ID.
 
 ### GUI/Client side (C++)
 
@@ -40,6 +43,8 @@ I wrote a binary protocol to manage the communication between the Python server 
 - A `MessageHandler` class is used to route messages based on the message type.
 - A `ProtocolParser` for encoding/decoding messages.
 - The Qt application uses a signal/slot mechanism to relate user interactions with functions. For example, sending a `HOME` command in the client will also emit a signal to read joint angles, and the GUI will react to this signal by populating/updating the joint angle values displayed in spinboxes.
+- A QTableView is used for teaching the robot. While the motors are disabled, you can move the robot to a position and save that position's Cartesian coordinates, which also saves the joint positions internally.
+- Positions can be recalled individually or in the sequence that they appear in the table.
 
 ## Building The Project
 1. Clone this repository: `git clone https://github.com/ianhong95/5DOFRobotArmV2`
