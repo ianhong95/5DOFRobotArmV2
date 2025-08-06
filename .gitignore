@@ -18,3 +18,4 @@ socket_server_backup.py
 api_logs.log
 gui_workspace/build
 gui_workspace/CMakeLists.txt.user
+python_workspace/saved_positions.db

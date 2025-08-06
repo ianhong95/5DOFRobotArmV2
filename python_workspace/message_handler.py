@@ -132,10 +132,7 @@ class MessageHandler:
     
     def handle_move_to_position(self, payload: bytes) -> bytes:
         """Move to the position at a given index."""
-        print(f"payload: {payload}")
         position_entry_index = struct.unpack('<i', payload)[0]
 
         joint_angles = self.db.get_joint_angles_from_idx(position_entry_index)
-        print(f"idx: {position_entry_index}")
-        print(f"target: {joint_angles}")
         self.robot_arm.sync_write_angles(joint_angles)
