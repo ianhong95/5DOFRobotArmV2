@@ -286,13 +286,12 @@ void MainWindow::addSavedPosition(SavedXYZPosition savedPositionData) {
 }
 
 void MainWindow::moveToPosition(int positionIndex) {
-    std::vector<int> positionIndexVector;
-    positionIndexVector.insert(positionIndexVector.begin(), positionIndex);
+    std::vector<int> positionIndexVector{positionIndex};
+
+    ui->debugTextBrowser->append("Requesting robot to move to selected position.");
 
     std::vector<uint8_t> moveToPositionMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::MoveToPosition, positionIndexVector);
     client->sendMessage(moveToPositionMessage);
-
-    ui->debugTextBrowser->append("Requesting robot to move to selected position.");
 }
 
 /* ==========

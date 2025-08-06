@@ -18,9 +18,29 @@ class MessageTypes:
     SAVE_CURRENT_POSITION = b'\x28'
     SAVE_SEQUENCE = b'\x29'
     MOVE_TO_POSITION = b'\x2A'
-    PLAY_BACK = b'\x2B'
-    PLAY_SEQUENCE = b'\x2C'
-    
+    PLAY_SEQUENCE = b'\x2B'
+
+    LENGTH = {
+        CONNECT: 1,
+        DISCONNECT: 1,
+        HOME: 1,
+        DISABLE: 1,
+        READ_JOINT_ANGLES: 1,
+        UPDATE_EE_POSITION: 1,
+        UPDATE_EE_ORIENTATION: 1,
+        MOVE_X: 5,
+        MOVE_Y: 5,
+        MOVE_Z: 5,
+        MOVE_J1: 5,
+        MOVE_J2: 5,
+        MOVE_J3: 5,
+        MOVE_J4: 5,
+        MOVE_J5: 5,
+        SAVE_CURRENT_POSITION: 13,
+        SAVE_SEQUENCE: 53,   # Message type (1), number of moves (4), up to 12 moves in sequence (48)
+        MOVE_TO_POSITION: 5,
+        PLAY_SEQUENCE: 61   # Message type (1), number of moves (4), up to 14 moves in sequence (56)
+    }
 
 class ResponseTypes:
     OK = b'\x64'

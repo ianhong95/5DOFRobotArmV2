@@ -78,4 +78,22 @@ class ProtocolParser:
         print(f"message_byte: {message_byte}")
         print(f"payload: {payload}")
 
-        return message_byte, payload  
+        return message_byte, payload
+    
+    @staticmethod
+    def get_message_type(incoming_message: bytes) -> bytes:
+        """Returns the message type (first byte) of an incoming message."""
+
+        return incoming_message[:1]
+    
+    @staticmethod
+    def get_message_length(message_type: bytes) -> int:
+        """Returns the expected length of the message based on its type."""
+
+        return MessageTypes.LENGTH[message_type]
+    
+    @staticmethod
+    def strip_padding(incoming_message: bytes, expected_length: int) -> bytes:
+        """Keep expected message length and remove padding (trailing null bytes)."""
+
+        return incoming_message[:expected_length]

@@ -95,7 +95,8 @@ class SocketServer:
         """
 
         incoming_packet = self._accumulate_packet()
-        response_data = self.message_handler.handle_message(incoming_packet)
+        preprocessed_message = self._strip_data(incoming_packet)
+        response_data = self.message_handler.handle_message(preprocessed_message)
 
         print(f"Response: {response_data}")
 
@@ -113,9 +114,6 @@ class SocketServer:
         A constant "frame" size is defined in PROTOCOL_CONSTANTS. When a message is received,
         this method continuously tries to receive bytes until the length of the data_store
         variable is equal to the frame size.
-        
-        TODO: Handle cases where the last byte(s) could be null bytes. Right now it could
-        strip too much even if trailing nulls are valid parts of the message.
         """
 
         data_store = b''
@@ -124,6 +122,13 @@ class SocketServer:
             packet = self.client.recv(self.BYTE_FRAME_LENGTH - len(data_store))
             data_store += packet
 
-        stripped_data = data_store.rstrip(b'\0')    # Clear null byte padding
+        return data_store
+    
+    def _strip_data(self, data: bytes) -> bytes:
+        """Strips message padding to keep the message length according to its type."""
 
-        return stripped_data
+        message_type = ProtocolParser.get_message_type(data)
+        message_length = ProtocolParser.get_message_length(message_type)
+        stripped_message = ProtocolParser.strip_padding(data, message_length)
+
+        return stripped_message
