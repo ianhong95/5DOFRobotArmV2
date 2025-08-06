@@ -18,7 +18,7 @@ class MessageTypes:
     SAVE_CURRENT_POSITION = b'\x28'
     SAVE_SEQUENCE = b'\x29'
     MOVE_TO_POSITION = b'\x2A'
-    PLAY_SEQUENCE = b'\x2B'
+    PLAY_CURRENT_SEQUENCE = b'\x2B'
 
     LENGTH = {
         CONNECT: 1,
@@ -39,7 +39,7 @@ class MessageTypes:
         SAVE_CURRENT_POSITION: 13,
         SAVE_SEQUENCE: 53,   # Message type (1), number of moves (4), up to 12 moves in sequence (48)
         MOVE_TO_POSITION: 5,
-        PLAY_SEQUENCE: 61   # Message type (1), number of moves (4), up to 14 moves in sequence (56)
+        PLAY_CURRENT_SEQUENCE: 61   # Message type (1), number of moves (4), up to 14 moves in sequence (56)
     }
 
 class ResponseTypes:

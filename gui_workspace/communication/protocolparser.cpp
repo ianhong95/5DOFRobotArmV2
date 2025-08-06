@@ -111,6 +111,7 @@ constexpr size_t ProtocolParser::getMessageLength(ProtocolConstants::RobotMessag
         case MsgT::UpdateEEPos: return static_cast<size_t>(MsgL::UpdateEEPos);
         case MsgT::SaveCurrentPosition: return static_cast<size_t>(MsgL::SaveCurrentPosition);
         case MsgT::MoveToPosition: return static_cast<size_t>(MsgL::MoveToPosition);
+        case MsgT::PlayCurrentSequence: return static_cast<size_t>(MsgL::PlayCurrentSequence);
         default:
             std::cout << "No length found!";
             return static_cast<size_t>(0);

@@ -24,7 +24,6 @@ void TeachPanel::on_saveCurrentButton_clicked() {
     emit saveCurrentPositionRequested();
 }
 
-
 void TeachPanel::on_moveToButton_clicked() {
     // selectionModel() accesses the selected items only
     QModelIndexList selectedRows = ui->posMemoryTableView->selectionModel()->selectedIndexes();
@@ -37,6 +36,19 @@ void TeachPanel::on_moveToButton_clicked() {
 
         emit moveToPositionRequested(positionEntryIndex);
     }
+}
 
+void TeachPanel::on_playCurrentSeqButton_clicked() {
+    std::vector<int> savedPositionIds;
+
+    int rowCount = positionTableModel->rowCount();
+
+    savedPositionIds.push_back(rowCount);   // First element must always be the count!
+
+    for (int row = 0; row < rowCount; ++row) {
+        savedPositionIds.push_back(positionTableModel->index(row, 0).data().toInt());
+    }
+
+    emit playCurrentSeqRequested(savedPositionIds);
 }
 

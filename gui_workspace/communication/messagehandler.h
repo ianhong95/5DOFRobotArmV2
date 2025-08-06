@@ -37,7 +37,7 @@ private:
     void handleUpdateEEPos(std::vector<uint8_t> payload, DataVariant& output);
     void handleSaveCurrentPosition(std::vector<uint8_t> payload, DataVariant& output);
     void handleMoveToPosition(std::vector<uint8_t> payload, DataVariant& output);
-    void handlePlayBack(std::vector<uint8_t> payload, DataVariant& output);
+    void handlePlayCurrentSequence(std::vector<uint8_t> payload, DataVariant& output);
 
     std::unordered_map<ProtocolConstants::RobotMessageType, HandlerFunction> message_handlers;
 

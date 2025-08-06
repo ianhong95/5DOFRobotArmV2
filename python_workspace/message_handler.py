@@ -9,6 +9,7 @@ very larget match/case or conditional statement.
 from typing import Callable, Dict, Any  # Only for type hinting; built-in versions would create objects instead
 from math import degrees
 import struct
+from time import sleep
 
 import numpy as np
 
@@ -136,3 +137,16 @@ class MessageHandler:
 
         joint_angles = self.db.get_joint_angles_from_idx(position_entry_index)
         self.robot_arm.sync_write_angles(joint_angles)
+
+    def handle_play_current_sequence(self, payload: bytes) -> bytes:
+        """Move to the positions in the GUI table."""
+        print(f"test payload: {payload}")
+
+        unpacked_payload = struct.unpack('<15i', payload)
+        id_count = unpacked_payload[0]   # Defined by message protocol
+        position_ids = unpacked_payload[1:id_count + 1]  # Add 1 because the first element is the id count
+
+        for id in position_ids:
+            joint_angles = self.db.get_joint_angles_from_idx(id)
+            self.robot_arm.sync_write_angles(joint_angles)
+            sleep(2)

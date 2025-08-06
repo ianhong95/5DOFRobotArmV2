@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     teachPanel = ui->teachPanel;
 
     // Open the video stream (adjust the string as needed)
-    cap.open("tcp://127.0.0.1:60001", cv::CAP_FFMPEG);
+    cap.open("tcp://robot-pi.local:60001", cv::CAP_FFMPEG);
 
     // Create and start timer
     timer = new QTimer(this);
@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(teachPanel, &TeachPanel::saveCurrentPositionRequested, this, &MainWindow::saveCurrentPositionRequested);
     connect(teachPanel, &TeachPanel::moveToPositionRequested, this, &MainWindow::moveToPosition);
+    connect(teachPanel, &TeachPanel::playCurrentSeqRequested, this, &MainWindow::playCurrentSequence);
 
     // Assign values to member variables
     connErrorMsg = QString::fromUtf8("Error: No socket connection.");
@@ -292,6 +293,13 @@ void MainWindow::moveToPosition(int positionIndex) {
 
     std::vector<uint8_t> moveToPositionMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::MoveToPosition, positionIndexVector);
     client->sendMessage(moveToPositionMessage);
+}
+
+void MainWindow::playCurrentSequence(std::vector<int> savedPositionIds) {
+    ui->debugTextBrowser->append("Playing current saved positions.");
+
+    std::vector<uint8_t> playCurrentSequenceMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::PlayCurrentSequence, savedPositionIds);
+    client->sendMessage(playCurrentSequenceMessage);
 }
 
 /* ==========

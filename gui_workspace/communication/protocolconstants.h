@@ -27,10 +27,10 @@ namespace ProtocolConstants {
         SaveCurrentPosition = 0x28,     // 40
         SaveSequence = 0x29,            // 41
         MoveToPosition = 0x2A,            // 42
-        PlayBack = 0x2B,                // 43
-        PlaySequence = 0x2C,            // 44
+        PlayCurrentSequence = 0x2B,                // 43
     };
 
+    // Only used for INCOMING messages
     enum class MessageLength : size_t {
         Connect = 2,
         Disconnect = 2,
@@ -48,10 +48,9 @@ namespace ProtocolConstants {
         MoveJ4 = 3,
         MoveJ5 = 3,
         SaveCurrentPosition = 18,
-        SaveSequence = 32,  // Message type, response, sequence ID, max 29 positions
+        SaveSequence = 62,  // Message type (1), response (1), sequence ID (4), max 14 position IDs (56)
         MoveToPosition = 6,
-        PlayBack = 32,       // Message type, response, max 30 positions
-        PlaySequence = 3,
+        PlayCurrentSequence = 58,   // Message type (1), response (1), max 14 position IDs (56)
     };
 
     enum class MessageIndex : uint8_t {

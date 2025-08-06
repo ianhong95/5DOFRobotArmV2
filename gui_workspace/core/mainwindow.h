@@ -80,6 +80,7 @@ private slots:
     void saveCurrentPositionRequested();
     void addSavedPosition(SavedXYZPosition savedPositionData);
     void moveToPosition(int positionIndex);
+    void playCurrentSequence(std::vector<int> savedPositionIds);
 
 };
 

@@ -45,8 +45,8 @@ void MessageHandler::setupHandlers() {
     MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::MoveToPosition, [this](std::vector<uint8_t> payload, DataVariant& output) {
         this->handleMoveToPosition(payload, output);
     });
-    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::PlayBack, [this](std::vector<uint8_t> payload, DataVariant& output) {
-        this->handlePlayBack(payload, output);
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::PlayCurrentSequence, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handlePlayCurrentSequence(payload, output);
     });
 }
 
@@ -126,6 +126,6 @@ void MessageHandler::handleMoveToPosition(std::vector<uint8_t> payload, DataVari
 
 }
 
-void MessageHandler::handlePlayBack(std::vector<uint8_t> payload, DataVariant &output) {
+void MessageHandler::handlePlayCurrentSequence(std::vector<uint8_t> payload, DataVariant &output) {
 
 }

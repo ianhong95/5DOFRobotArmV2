@@ -26,6 +26,8 @@ private slots:
 
     void on_moveToButton_clicked();
 
+    void on_playCurrentSeqButton_clicked();
+
 private:
     Ui::TeachPanel *ui;
 
@@ -33,6 +35,7 @@ signals:
     void saveCurrentPositionRequested();
     void getXYZPosition();
     void moveToPositionRequested(int positionIndex);
+    void playCurrentSeqRequested(std::vector<int> savedPositionIds);
 };
 
 #endif // TEACHPANEL_H

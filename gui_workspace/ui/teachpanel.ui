@@ -48,9 +48,9 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QPushButton" name="playBackButton">
+     <widget class="QPushButton" name="playCurrentSeqButton">
       <property name="text">
-       <string>Play Back</string>
+       <string>Play Current Sequence</string>
       </property>
      </widget>
     </item>
