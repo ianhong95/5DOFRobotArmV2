@@ -116,6 +116,7 @@ void MessageHandler::handleSaveCurrentPosition(std::vector<uint8_t> payload, Dat
     XYZPosition xyzPosition;
 
     int index = 0;
+
     std::memcpy(&index, payload.data(), sizeof(int));
     std::memcpy(xyzPosition.coordinates.data(), payload.data() + sizeof(int), xyzPosition.coordinates.size() * sizeof(float));
 

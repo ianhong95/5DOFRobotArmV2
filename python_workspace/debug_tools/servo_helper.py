@@ -48,7 +48,7 @@ p = sms_sts(portHandler)
 
 activeServos = []
 
-for id in range(50):
+for id in range(60):
     sts_model_number, sts_comm_result, sts_error = p.ping(id)
     if sts_comm_result == 0:
         activeServos.append(id)                         # Add servo ID to temporary list

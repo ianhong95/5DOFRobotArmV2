@@ -25,7 +25,7 @@ class MessageHandler:
         # Dictionary to map handler methods to message types so we can have just one generic "handle_message" method
         self.message_handlers: Dict[bytes, Callable] = {}
 
-        # Initialize robot arm instance
+        # Initialize robot arm and database interface instance
         self.robot_arm = RobotArm()
         self.db = SavedPositionsDB()
 
