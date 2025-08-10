@@ -5,6 +5,10 @@
 #include <QWidget>
 #include <QtWebEngineWidgets/QWebEngineView>
 #include <QVBoxLayout>
+#include <QDir>
+#include <QString>
+#include <QCoreApplication>
+#include <QDebug>
 
 class Robot3DView : public QWidget
 {

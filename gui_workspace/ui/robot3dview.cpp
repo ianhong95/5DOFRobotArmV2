@@ -11,5 +11,8 @@ Robot3DView::Robot3DView(QWidget *parent)
     layout->addWidget(m_webView);
 
     // Load HTML file
-    m_webView->load(QUrl::fromLocalFile(QDir::currentPath() + "/assets/robot3d.html"));
+    QString htmlPath = QCoreApplication::applicationDirPath() + "/../../assets/robot3d.html";
+    qDebug() << htmlPath;
+
+    m_webView->load(QUrl::fromLocalFile(htmlPath));
 }

@@ -11,7 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(OpenCV REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS 
+    Widgets
+    Network
+    WebEngineWidgets
+)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -22,6 +26,7 @@ set(SOURCES
     communication/protocolparser.cpp
     communication/messagehandler.cpp
     ui/teachpanel.cpp
+    ui/robot3dview.cpp
     ui/models/positiontablemodel.cpp
 )
 
@@ -34,6 +39,7 @@ set(HEADERS
     communication/protocolparser.h
     communication/messagehandler.h
     ui/teachpanel.h
+    ui/robot3dview.h
     ui/models/positiontablemodel.h
 )
 
@@ -42,12 +48,11 @@ set(UI_FILES
     ui/teachpanel.ui
 )
 
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
-
-qt_add_executable(gui_workspace ${SOURCES} ${HEADERS} ${UI_FILES}
-    ui/robot3dview.h ui/robot3dview.cpp)
-
-target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+qt_add_executable(gui_workspace 
+    ${SOURCES} 
+    ${HEADERS} 
+    ${UI_FILES}
+)
 
 set_target_properties(gui_workspace PROPERTIES
     WIN32_EXECUTABLE TRUE
@@ -68,8 +73,13 @@ target_include_directories(gui_workspace PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/communication
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
     )
-target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network ${OpenCV_LIBS})
-target_link_libraries(gui_workspace PRIVATE Qt5::Core Qt5::Widgets)
+target_link_libraries(gui_workspace PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::WebEngineWidgets
+    breeze
+    ${OpenCV_LIBS}
+)
 
 install(TARGETS gui_workspace
     BUNDLE DESTINATION .

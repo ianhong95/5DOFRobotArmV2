@@ -5,8 +5,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(
-#  ${QT_VERSION}
-  Qt5
+  Qt${QT_VERSION_MAJOR}
+  # Qt6
   COMPONENTS Core Gui Widgets Svg
   REQUIRED)
 # -------------------
