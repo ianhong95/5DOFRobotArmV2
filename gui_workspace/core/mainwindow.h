@@ -44,7 +44,7 @@ private:
     std::vector<float> xyzPosition = std::vector<float>(3);
 
 private slots:
-    // I/O HANDLING
+    // FETCH UPDATE HANDLING
     void updateJointAngles(JointAngles jointAngles);
     void updateXYZPosition(XYZPosition xyzPosition);
 
@@ -73,6 +73,8 @@ private slots:
 
     // Error Handling
     void handleClientConnError(const QString &errorMsg);
+
+    // UPDATE BUTTONS
     void on_updJointAnglesButton_clicked();
     void on_updXYZButton_clicked();
 
@@ -82,6 +84,9 @@ private slots:
     void moveToPosition(int positionIndex);
     void playCurrentSequence(std::vector<int> savedPositionIds);
 
+    // MANUAL CONTROLS
+    void on_openGripperButton_clicked();
+    void on_closeGripperButton_clicked();
 };
 
 #endif // MAINWINDOW_H

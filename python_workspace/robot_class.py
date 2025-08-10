@@ -52,9 +52,7 @@ class RobotArm:
     disable_servo(id): Disable the servo with the specified ID. Passing an ID of 0 will disable all servos.
     """
 
-    EE_SERVO_ID = 6
-
-    def __init__(self):
+    def __init__(self, sim = 0):
         # Load kinematics library class
         self._k = Kinematics("config.json")
 
@@ -108,6 +106,11 @@ class RobotArm:
         self.MAX_POS = config["servo_params"]["max_pos"]
         self.CENTER_POS = config["servo_params"]["center_pos"]
         self._DEADBAND = config["servo_params"]["deadband"]
+
+        self.GRIPPER_ID = config["gripper_params"]["id"]
+        self.GRIPPER_CLOSE_POS = config["gripper_params"]["close_pos"]
+        self.GRIPPER_OPEN_POS = config["gripper_params"]["open_pos"]
+        self.GRIPPER_TOLERANCE = config["gripper_params"]["tolerance"]
 
         # Initialize joint info dictionary
         self.joint_info = {
@@ -221,9 +224,9 @@ class RobotArm:
         joint_idx = 1
         for id in range(self._MAX_ID):
             sts_model_number, sts_comm_result, sts_error = self._packetHandler.ping(id)
-            if sts_comm_result == 0:
+            if (sts_comm_result == 0) and (id != self.GRIPPER_ID):
                 br = self._packetHandler.readBaudrate(id)
-                print(f"Found active servo. ID: {id}. Baudrate is {br}")
+                print(f"Found active servo. ID: {id}. Baudrate is {br}. Assigned to joint {joint_idx}")
                 activeServos.append(id)                         # Add servo ID to temporary list
                 self.joint_info[joint_idx]["servo_id"] = id     # Add servo ID to joint_info dictionary
 
@@ -380,7 +383,7 @@ class RobotArm:
 
                         joint_idx += 1
                     else:
-                        print(f"Failed to access servo {id}. Cancelling motion.")
+                        print(f"Failed to access servo {id}.")
                         break
                 
                 return joint_angles
@@ -407,6 +410,45 @@ class RobotArm:
         while(True):
             self.read_joint_angle(id)
 
+    # ===============
+    # GRIPPER METHODS
+    # ===============
+
+    """
+    This is in its own section because the gripper servo is different and uses a different protocol.
+
+    TODO: Figure out how to implement a separate protocol for the gripper servo in the ESP32 firmware.
+    """
+
+    def read_gripper_state(self) -> bool:
+        sts_current_position, sts_comm_result, sts_error = self._packetHandler.ReadPos(self.GRIPPER_ID)
+        if sts_comm_result == 0:
+            if sts_current_position > self.GRIPPER_OPEN_POS - self.GRIPPER_TOLERANCE:
+                return True
+            elif sts_current_position < self.GRIPPER_CLOSE_POS + self.GRIPPER_TOLERANCE:
+                return False
+            else:
+                print("Invalid gripper state.")
+        else:
+            print("Could not read gripper state.")
+
+    def set_gripper_state(self, state: bool) -> bool:
+        if state == True:
+            pos = self.GRIPPER_OPEN_POS
+        elif state == False:
+            pos = self.GRIPPER_CLOSE_POS
+        else:
+            print("Invalid state argument.")
+
+        sts_comm_result, sts_error = self._packetHandler.WritePosEx(self.GRIPPER_ID, pos, self.speed, self.accel)
+
+        if sts_comm_result == 0:
+            self.gripper_state = state
+        else:
+            print("Error communicating with the gripper servo.")
+
+        return state
+    
     # ========
     # TEACHING
     # ========

@@ -15,6 +15,9 @@ class MessageTypes:
     MOVE_J3 = b'\x20'
     MOVE_J4 = b'\x21'
     MOVE_J5 = b'\x22'
+    OPEN_GRIPPER = b'\x23'
+    CLOSE_GRIPPER = b'\x24'
+    READ_GRIPPER_STATE = b'\x25'
     SAVE_CURRENT_POSITION = b'\x28'
     SAVE_SEQUENCE = b'\x29'
     MOVE_TO_POSITION = b'\x2A'
@@ -36,6 +39,8 @@ class MessageTypes:
         MOVE_J3: 5,
         MOVE_J4: 5,
         MOVE_J5: 5,
+        OPEN_GRIPPER: 1,
+        CLOSE_GRIPPER: 1,
         SAVE_CURRENT_POSITION: 13,
         SAVE_SEQUENCE: 53,   # Message type (1), number of moves (4), up to 12 moves in sequence (48)
         MOVE_TO_POSITION: 5,

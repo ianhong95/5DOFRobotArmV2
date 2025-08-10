@@ -24,9 +24,10 @@ class SocketServer:
         self.NETWORK_PORT = self.config["network_settings"]["PORT"]
         self.client_connected = False
         self.BYTE_FRAME_LENGTH = ProtocolConstants.FRAME_BUFFER_LENGTH
+        self._ENV = self.config["env"]["SIMULATION"]
 
         # Initialize communication classes and register handlers
-        self.message_handler = MessageHandler()
+        self.message_handler = MessageHandler(self._ENV)
         self._register_handlers()
 
     def _load_config(self, config_file: str):
@@ -61,6 +62,8 @@ class SocketServer:
             self.message_handler.register_handler(MessageTypes.SAVE_CURRENT_POSITION, self.message_handler.handle_save_current_position)
             self.message_handler.register_handler(MessageTypes.MOVE_TO_POSITION, self.message_handler.handle_move_to_position)
             self.message_handler.register_handler(MessageTypes.PLAY_CURRENT_SEQUENCE, self.message_handler.handle_play_current_sequence)
+            self.message_handler.register_handler(MessageTypes.OPEN_GRIPPER, self.message_handler.handle_open_gripper)
+            self.message_handler.register_handler(MessageTypes.CLOSE_GRIPPER, self.message_handler.handle_close_gripper)
 
     def start(self):
         """Start the socket server and listen for client connections."""

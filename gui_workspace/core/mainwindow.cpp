@@ -349,3 +349,18 @@ void MainWindow::on_updXYZButton_clicked() {
     ui->zSpinBox->setValue(MainWindow::xyzPosition[2]);
 }
 
+void MainWindow::on_openGripperButton_clicked() {
+    std::vector<uint8_t> openGripperMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::OpenGripper);
+    client->sendMessage(openGripperMessage);
+
+    ui->gripperStateLbl->setText("Current gripper state: OPEN");
+}
+
+
+void MainWindow::on_closeGripperButton_clicked() {
+    std::vector<uint8_t> closeGripperMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::OpenGripper);
+    client->sendMessage(closeGripperMessage);
+
+    ui->gripperStateLbl->setText("Current gripper state: CLOSE");
+}
+

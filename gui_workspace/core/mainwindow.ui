@@ -57,7 +57,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <property name="documentMode">
      <bool>false</bool>
@@ -158,7 +158,7 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_4">
+   <widget class="QGroupBox" name="quickControlsGBox">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -201,7 +201,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="groupBox">
+   <widget class="QGroupBox" name="cartesianCtrlGBox">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -417,64 +417,54 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QGroupBox" name="manualCtrlGBox">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>470</x>
       <y>710</y>
       <width>411</width>
-      <height>201</height>
+      <height>241</height>
      </rect>
     </property>
     <property name="title">
-     <string>JOINT CONTROL</string>
+     <string>MANUAL CONTROL</string>
     </property>
     <layout class="QGridLayout" name="gridLayout_7">
-     <item row="4" column="1">
-      <widget class="QSlider" name="J5Slider">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="disableJ2Button">
+     <item row="4" column="3">
+      <widget class="QPushButton" name="moveJ5Button">
        <property name="text">
-        <string>Update J2</string>
+        <string>Move J5</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="disableJButton">
+     <item row="2" column="3">
+      <widget class="QPushButton" name="moveJ3Button">
        <property name="text">
-        <string>Update J3</string>
+        <string>Move J3</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QPushButton" name="disableJ1Button">
+     <item row="3" column="3">
+      <widget class="QPushButton" name="moveJ4Button">
        <property name="text">
-        <string>Update J1</string>
-       </property>
-       <property name="checkable">
-        <bool>false</bool>
-       </property>
-       <property name="flat">
-        <bool>false</bool>
+        <string>Move J4</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QSlider" name="J2Slider">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+     <item row="2" column="2">
+      <widget class="QDoubleSpinBox" name="J3SpinBox">
+       <property name="minimum">
+        <double>-180.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>180.000000000000000</double>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QSlider" name="J3Slider">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+     <item row="7" column="2">
+      <widget class="QPushButton" name="openGripperButton">
+       <property name="text">
+        <string>Open Gripper</string>
        </property>
       </widget>
      </item>
@@ -494,10 +484,37 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QPushButton" name="disableJ4Button">
+     <item row="1" column="1">
+      <widget class="QSlider" name="J2Slider">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="moveJ1Button">
        <property name="text">
-        <string>Update J4</string>
+        <string>Move J1</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLabel" name="gripperStateLbl">
+       <property name="text">
+        <string>Current gripper state:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QSlider" name="J5Slider">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -505,13 +522,6 @@
       <widget class="QSlider" name="J4Slider">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QPushButton" name="disableJ5Button">
-       <property name="text">
-        <string>Update J5</string>
        </property>
       </widget>
      </item>
@@ -523,26 +533,6 @@
        <property name="buttonSymbols">
         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
        </property>
-       <property name="minimum">
-        <double>-180.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>180.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QDoubleSpinBox" name="J2SpinBox">
-       <property name="minimum">
-        <double>-180.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>180.000000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QDoubleSpinBox" name="J3SpinBox">
        <property name="minimum">
         <double>-180.000000000000000</double>
        </property>
@@ -571,14 +561,52 @@
        </property>
       </widget>
      </item>
+     <item row="7" column="3">
+      <widget class="QPushButton" name="closeGripperButton">
+       <property name="text">
+        <string>Close Gripper</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QDoubleSpinBox" name="J2SpinBox">
+       <property name="minimum">
+        <double>-180.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>180.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="moveJ2Button">
+       <property name="text">
+        <string>Move J2</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSlider" name="J3Slider">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1" colspan="3">
+      <widget class="Line" name="manualCtrlHLine">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="gridGroupBox_4">
+   <widget class="QGroupBox" name="debugGBox">
     <property name="geometry">
      <rect>
-      <x>710</x>
+      <x>890</x>
       <y>710</y>
-      <width>521</width>
+      <width>341</width>
       <height>241</height>
      </rect>
     </property>

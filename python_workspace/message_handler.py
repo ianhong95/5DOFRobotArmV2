@@ -21,12 +21,12 @@ from saved_positions_handler import SavedPositionsDB
 class MessageHandler:
     """A class for handling incoming messages and routing them to the appropriate handler method based on the message type."""
 
-    def __init__(self):
+    def __init__(self, sim = 0):
         # Dictionary to map handler methods to message types so we can have just one generic "handle_message" method
         self.message_handlers: Dict[bytes, Callable] = {}
 
         # Initialize robot arm and database interface instance
-        self.robot_arm = RobotArm()
+        self.robot_arm = RobotArm(sim)
         self.db = SavedPositionsDB()
 
     def register_handler(self, message_type: bytes, handler: Callable):
@@ -140,7 +140,6 @@ class MessageHandler:
 
     def handle_play_current_sequence(self, payload: bytes) -> bytes:
         """Move to the positions in the GUI table."""
-        print(f"test payload: {payload}")
 
         unpacked_payload = struct.unpack('<15i', payload)
         id_count = unpacked_payload[0]   # Defined by message protocol
@@ -150,3 +149,13 @@ class MessageHandler:
             joint_angles = self.db.get_joint_angles_from_idx(id)
             self.robot_arm.sync_write_angles(joint_angles)
             sleep(2)
+
+    def handle_open_gripper(self, payload: bytes) -> bytes:
+        """Sets the gripper to the fully open position."""
+
+        self.robot_arm.set_gripper_state(True)
+
+    def handle_close_gripper(self, payload: bytes) -> bytes:
+        """Sets the gripper to the fully closed position"""
+
+        self.robot_arm.set_gripper_state(False)

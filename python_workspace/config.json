@@ -1,5 +1,8 @@
 {
-    "network_settings":{
+    "env": {
+        "SIMULATION": 0
+    },
+    "network_settings": {
         "HOST": "0.0.0.0",
         "PORT": 61234
     },
@@ -16,6 +19,12 @@
         "max_pos": 4095,
         "center_pos": 2047,
         "deadband": 10
+    },
+    "gripper_params": {
+        "id": 100,
+        "open_pos": 1000,
+        "close_pos": 500,
+        "tolerance": 100
     },
     "DH_params": {
         "joint_1": {
@@ -75,6 +84,10 @@
         "joint_5": {
             "min_angle": -90,
             "max_angle": 90
-        }                                
+        },
+        "gripper": {
+            "gripper_open": -90,
+            "gripper_close": 90
+        }
     }
 }
