@@ -42,7 +42,10 @@ set(UI_FILES
     ui/teachpanel.ui
 )
 
-qt_add_executable(gui_workspace ${SOURCES} ${HEADERS} ${UI_FILES})
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+
+qt_add_executable(gui_workspace ${SOURCES} ${HEADERS} ${UI_FILES}
+    ui/robot3dview.h ui/robot3dview.cpp)
 
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
@@ -66,6 +69,7 @@ target_include_directories(gui_workspace PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
     )
 target_link_libraries(gui_workspace PRIVATE Qt${QT_VERSION_MAJOR}::Widgets breeze Qt${QT_VERSION_MAJOR}::Network ${OpenCV_LIBS})
+target_link_libraries(gui_workspace PRIVATE Qt5::Core Qt5::Widgets)
 
 install(TARGETS gui_workspace
     BUNDLE DESTINATION .

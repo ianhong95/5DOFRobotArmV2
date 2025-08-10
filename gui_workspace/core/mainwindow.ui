@@ -141,6 +141,16 @@
        </item>
       </layout>
      </widget>
+     <widget class="Robot3DView" name="visualizerWidget" native="true">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>100</y>
+        <width>561</width>
+        <height>481</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="teachTab">
      <attribute name="title">
@@ -687,6 +697,12 @@
    <class>TeachPanel</class>
    <extends>QWidget</extends>
    <header>teachpanel.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Robot3DView</class>
+   <extends>QWidget</extends>
+   <header>robot3dview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
