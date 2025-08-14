@@ -9,12 +9,23 @@
 #include <QString>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QWebEngineSettings>
+#include <QWebEngineProfile>
 
 class Robot3DView : public QWidget
 {
     Q_OBJECT
 public:
     explicit Robot3DView(QWidget *parent = nullptr);
+
+    void moveJ1(float angle);
+    void moveJ2(float angle);
+    void moveJ3(float angle);
+    void moveJ4(float angle);
+    void rotateGripper(float angle);
+    void openGripper();
+    void closeGripper();
+
 
 private:
     QWebEngineView *m_webView;

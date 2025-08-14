@@ -33,7 +33,6 @@ private:
     ProtocolParser *parser;
     TeachPanel *teachPanel;
 
-
     QLabel *videoLabel;
     QTimer *timer;
     cv::VideoCapture cap;

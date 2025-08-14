@@ -141,15 +141,28 @@
        </item>
       </layout>
      </widget>
-     <widget class="Robot3DView" name="visualizerWidget" native="true">
+     <widget class="QGroupBox" name="visualizerGBox">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>100</y>
-        <width>561</width>
+        <width>571</width>
         <height>481</height>
        </rect>
       </property>
+      <property name="title">
+       <string>3D VISUALIZER</string>
+      </property>
+      <widget class="Robot3DView" name="visualizerWidget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>551</width>
+         <height>441</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
     </widget>
     <widget class="QWidget" name="teachTab">

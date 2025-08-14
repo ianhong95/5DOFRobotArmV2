@@ -6,47 +6,25 @@
     <script src="js/GLTFLoader.js"></script>
     <script src="js/OrbitControls.js"></script>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
-    <script>
-        // Set up 3D scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-
-        // Set up the renderer (this is like setting up your TV)
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x87CEEB); // Sky blue background
-        document.body.appendChild(renderer.domElement);
-
-        // Add some light so we can see things
-        const light = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(light);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 10, 5);
-        scene.add(directionalLight);
-
-        // Position the camera so we can see the scene
-        camera.position.set(5, 5, 5);
-        camera.lookAt(0, 0, 0);
-
-        // Create a simple cube to test
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshPhongMaterial({ color: 0xff0000 }); // Red cube
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-
-        // Make the cube rotate so we know it's working
-        function animate() {
-            requestAnimationFrame(animate);
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
-            renderer.render(scene, camera);
-        }
-        animate();
-    </script>
+    <script src="js/setupScene.js"></script>
+    <script src="js/loadModels.js"></script>
+    <script src="js/robotMotions.js"></script>
+    <script src="js/animate.js"></script>
 </body>
 </html>

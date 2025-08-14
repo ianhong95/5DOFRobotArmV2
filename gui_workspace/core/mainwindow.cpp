@@ -9,6 +9,7 @@
 #include "protocolparser.h"
 #include "messagetypes.h"
 #include "messagehandler.h"
+#include "robot3dview.h"
 
 /*
     TODO:
@@ -136,6 +137,7 @@ void MainWindow::on_negXButton_clicked() {
 }
 
 void MainWindow::on_posXButton_clicked() {
+
     if (client->connectionFlag == true) {
         std::vector<float> step_float_vector;
         std::vector<uint8_t> moveXMessage;
@@ -350,6 +352,7 @@ void MainWindow::on_updXYZButton_clicked() {
 }
 
 void MainWindow::on_openGripperButton_clicked() {
+    ui->visualizerWidget->openGripper();
     std::vector<uint8_t> openGripperMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::OpenGripper);
     client->sendMessage(openGripperMessage);
 
@@ -358,6 +361,7 @@ void MainWindow::on_openGripperButton_clicked() {
 
 
 void MainWindow::on_closeGripperButton_clicked() {
+    ui->visualizerWidget->closeGripper();
     std::vector<uint8_t> closeGripperMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::OpenGripper);
     client->sendMessage(closeGripperMessage);
 
