@@ -7,6 +7,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+#include <vector>
+
 Robot3DView::Robot3DView(QWidget *parent)
     : QWidget{parent}
     , m_webView(new QWebEngineView(this))
@@ -65,5 +67,10 @@ void Robot3DView::openGripper() {
 
 void Robot3DView::closeGripper() {
     QString script = QString("closeGripper();");
+    m_webView->page()->runJavaScript(script);
+}
+
+void Robot3DView::moveJoints(float j1Angle, float j2Angle, float j3Angle, float j4Angle, float j5Angle) {
+    QString script = QString("moveJoints('%1', '%2', '%3', '%4', '%5');").arg(j1Angle).arg(j2Angle).arg(j3Angle).arg(j4Angle).arg(j5Angle);
     m_webView->page()->runJavaScript(script);
 }

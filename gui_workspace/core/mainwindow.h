@@ -86,6 +86,11 @@ private slots:
     // MANUAL CONTROLS
     void on_openGripperButton_clicked();
     void on_closeGripperButton_clicked();
+    void on_moveJ1Button_clicked();
+    void on_moveJ2Button_clicked();
+    void on_moveJ3Button_clicked();
+    void on_moveJ4Button_clicked();
+    void on_moveJ5Button_clicked();
 };
 
 #endif // MAINWINDOW_H

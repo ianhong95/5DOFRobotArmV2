@@ -12,6 +12,8 @@
 #include <QWebEngineSettings>
 #include <QWebEngineProfile>
 
+#include <vector>
+
 class Robot3DView : public QWidget
 {
     Q_OBJECT
@@ -25,7 +27,7 @@ public:
     void rotateGripper(float angle);
     void openGripper();
     void closeGripper();
-
+    void moveJoints(float j1Angle, float j2Angle, float j3Angle, float j4Angle, float j5Angle);
 
 private:
     QWebEngineView *m_webView;

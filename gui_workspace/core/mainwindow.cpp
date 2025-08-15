@@ -11,6 +11,8 @@
 #include "messagehandler.h"
 #include "robot3dview.h"
 
+#include <cmath>
+
 /*
     TODO:
         - Add camera feed
@@ -359,12 +361,37 @@ void MainWindow::on_openGripperButton_clicked() {
     ui->gripperStateLbl->setText("Current gripper state: OPEN");
 }
 
-
 void MainWindow::on_closeGripperButton_clicked() {
     ui->visualizerWidget->closeGripper();
     std::vector<uint8_t> closeGripperMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::OpenGripper);
     client->sendMessage(closeGripperMessage);
 
     ui->gripperStateLbl->setText("Current gripper state: CLOSE");
+}
+
+
+void MainWindow::on_moveJ1Button_clicked() {
+    float j1Angle = (ui->J1SpinBox->value()) * M_PI / 180.0;
+    ui->visualizerWidget->moveJ1(j1Angle);
+}
+
+void MainWindow::on_moveJ2Button_clicked() {
+    float j2Angle = (ui->J2SpinBox->value()) * M_PI / 180.0;
+    ui->visualizerWidget->moveJ2(j2Angle);
+}
+
+void MainWindow::on_moveJ3Button_clicked() {
+    float j3Angle = (ui->J3SpinBox->value()) * M_PI / 180.0;
+    ui->visualizerWidget->moveJ3(j3Angle);
+}
+
+void MainWindow::on_moveJ4Button_clicked() {
+    float j4Angle = (ui->J4SpinBox->value()) * M_PI / 180.0;
+    ui->visualizerWidget->moveJ4(j4Angle);
+}
+
+void MainWindow::on_moveJ5Button_clicked() {
+    float gripperAngle = (ui->J5SpinBox->value()) * M_PI / 180.0;
+    ui->visualizerWidget->rotateGripper(gripperAngle);
 }
 
