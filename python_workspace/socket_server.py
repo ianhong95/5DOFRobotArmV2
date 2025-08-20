@@ -7,17 +7,22 @@ When messages are received, they are routed to the message handler, and the resp
 is sent backt to the client.
 """
 
-import socket
+# import socket
 import json
+import asyncio
 
 from message_handler import MessageHandler
 from protocol_constants import ProtocolConstants, MessageTypes
 from protocol_parser import ProtocolParser
 
-class SocketServer:
-    """Socket server for TCP communication."""
+class TCPSocketServer:
+    """
+    Socket server for TCP communication.
+    
+    TODO: Move all the config loading to main.py
+    """
 
-    def __init__(self, config_file: str = "config.json"):
+    def __init__(self, config_file: str):
         # Initialize configuration settings
         self.config = self._load_config(config_file)
         self.HOST_ADDR = self.config["network_settings"]["HOST"]
@@ -25,10 +30,14 @@ class SocketServer:
         self.client_connected = False
         self.BYTE_FRAME_LENGTH = ProtocolConstants.FRAME_BUFFER_LENGTH
         self._ENV = self.config["env"]["SIMULATION"]
+        # self.on_message_callback = on_message_callback
 
         # Initialize communication classes and register handlers
         self.message_handler = MessageHandler(self._ENV)
         self._register_handlers()
+
+        # Initialize empty set (unordered, unique) to store client connections
+        self.clients = set()
 
     def _load_config(self, config_file: str):
         """Load network settings from configuration file.
@@ -65,54 +74,75 @@ class SocketServer:
             self.message_handler.register_handler(MessageTypes.OPEN_GRIPPER, self.message_handler.handle_open_gripper)
             self.message_handler.register_handler(MessageTypes.CLOSE_GRIPPER, self.message_handler.handle_close_gripper)
 
-    def start(self):
-        """Start the socket server and listen for client connections."""
+        print("Message handlers registered.")
 
-        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket_server.bind((self.HOST_ADDR, self.NETWORK_PORT))
-        self.socket_server.listen()
+    async def start(self):
+        """
+        Start the socket server and listen for client connections.
+        """
 
+        self.server = await asyncio.start_server(
+            self._handle_client_connection,
+            self.HOST_ADDR,
+            self.NETWORK_PORT
+        )
         print(f"Server started. Listening on {self.HOST_ADDR}:{self.NETWORK_PORT}")
 
-        while True:
-            print("Waiting for clients...")
-            self.client, client_addr = self.socket_server.accept() # Wait for incoming connection
+        await self.server.serve_forever()
 
-            self.client_connected = True
-            print(f"Client connected from {client_addr}.")
+    async def _handle_client_connection(self, client_reader: asyncio.StreamReader, client_writer: asyncio.StreamWriter):
+        """
+        This method is called when a client connects to the server.
+        """
+        addr = client_writer.get_extra_info('peername')
+        print(f"Client {addr} connected!")
 
-            while (self.client_connected):
-                self._handle_client_message()   # Listen for and handle client messages indefinitely
-
-    def stop(self):
+        try: 
+            while True:
+                await self._handle_client_message(client_reader, client_writer)
+        except (ConnectionResetError, asyncio.IncompleteReadError):
+            print(f"Client {addr} disconnected.")
+        except Exception as e:
+            print(f"Error handling client {addr}: {e}")
+        finally:
+            client_writer.close()
+            await client_writer.wait_closed()
+        
+    async def stop(self):
         """Stop the socket server."""
 
-        self.socket_server.close()
+        self.server.close()
         print("Socket server connection closed.")
 
-    def _handle_client_message(self):
-        """Call the protocol handler to receive and process the incoming client messages.
+    async def _handle_client_message(self, client_reader: asyncio.StreamReader, client_writer: asyncio.StreamWriter):
+        """
+        Call the protocol handler to receive and process the incoming client messages.
         
         This method accumulates bytes until the buffer is filled, the forwards the message
         to the MessageHandler class. When a response from the MessageHandler class is received,
         this response (in the form of data) is sent back to the client.
         """
 
-        incoming_packet = self._accumulate_packet()
+        incoming_packet = await self._accumulate_packet(client_reader)
         preprocessed_message = self._strip_data(incoming_packet)
+
         response_data = self.message_handler.handle_message(preprocessed_message)
 
         print(f"Response: {response_data}")
 
         if (response_data):
-            self.client.sendall(response_data)
+            client_writer.write(response_data)
+            await client_writer.drain()
 
         # Special case
         if (response_data == ProtocolParser.encode_message(MessageTypes.DISCONNECT)):
             self.client_connected = False
-            print(f"Client disconnected.")
+            print(f"Client disconnect message received.")
 
-    def _accumulate_packet(self) -> bytes:
+        # TODO: Placeholder for now. Implement this after writing websocket server.
+        # await self.on_message_callback()
+
+    async def _accumulate_packet(self, client_reader) -> bytes:
         """Receive bytes until the byte frame is filled.
 
         A constant "frame" size is defined in PROTOCOL_CONSTANTS. When a message is received,
@@ -123,7 +153,11 @@ class SocketServer:
         data_store = b''
 
         while (len(data_store) < self.BYTE_FRAME_LENGTH):
-            packet = self.client.recv(self.BYTE_FRAME_LENGTH - len(data_store))
+            packet = await client_reader.read(self.BYTE_FRAME_LENGTH - len(data_store))
+
+            if not packet:
+                raise ConnectionResetError("Client disconnected during message transmission.")
+            
             data_store += packet
 
         return data_store

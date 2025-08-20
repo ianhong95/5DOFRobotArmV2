@@ -1,6 +1,6 @@
 {
     "env": {
-        "SIMULATION": 0
+        "SIMULATION": 1
     },
     "network_settings": {
         "HOST": "0.0.0.0",

@@ -52,22 +52,30 @@ class RobotArm:
     disable_servo(id): Disable the servo with the specified ID. Passing an ID of 0 will disable all servos.
     """
 
-    def __init__(self, sim = 0):
+    def __init__(self, sim: int = 0):
         # Load kinematics library class
         self._k = Kinematics("config.json")
+        self.SIM = sim
 
         # Set up connection to robot
         self._load_config()
-        self._conn = self._start_connection()
-        self._packetHandler = sms_sts(self._conn)
 
-        self._activeServos = self._get_active_servos()  # Search for servo IDs and store them in a list
-        
-        self.current_tf = self.compute_fk() # Initialize kinematics
+        if self.SIM == False:
+            self._conn = self._start_connection()
+            self._packetHandler = sms_sts(self._conn)
 
-        self._move_complete = True  # Initialize check properties
+            self._activeServos = self._get_active_servos()  # Search for servo IDs and store them in a list
+            
+            self.current_tf = self.compute_fk() # Initialize kinematics
+
+            self._move_complete = True  # Initialize check properties
+
+            self.teach_positions = {}
+        else:
+            self._conn = None
 
         self.teach_positions = {}
+        
 
         # Wait a couple of seconds for all operations to complete
         # print("Robot initialized successfully. Moving to HOME position.")
@@ -369,6 +377,7 @@ class RobotArm:
 
         TODO: Clean up variable names and logic. Try to use list comprehension.
         """
+
         match id:
             case 0:
                 joint_angles = []
@@ -601,6 +610,10 @@ class RobotArm:
         id: int
             Pass the ID of the servo to disable, or pass an ID of 0 to disable all servos.
         """
+
+        if self.SIM == 1:
+            return
+
         match id:
             case 0:
                 for id in self._activeServos:
@@ -784,8 +797,9 @@ class RobotArm:
         A numpy array for the 4x4 matrix that represents the rotation and position of the end effector.
         """
 
-        self.read_joint_angle(0)
-
+        if self.SIM == 0:
+            self.read_joint_angle(0)
+        
         joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
         FK = self._k.calc_fk_mat(joint_angles)
@@ -958,15 +972,14 @@ class RobotArm:
             delay = self.MOVE_DELAY
 
         targets_in_radians = [radians(angle) for angle in self.saved_positions[0]["joint_angles"]]
-        self.sync_write_angles(targets_in_radians)
 
-        time.sleep(1)   # This delay is necessary for the MCU to finish processing the previous command.
-
-        self.update_position_by_alias("HOME")
-
-        time.sleep(delay)
-
-        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+        if self.SIM == 0:
+            self.sync_write_angles(targets_in_radians)
+            # self.update_position_by_alias("HOME")
+            time.sleep(delay)
+            new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
+        else:
+            new_angles = [round(degrees(angle), 1) for angle in targets_in_radians]
 
         return new_angles
     

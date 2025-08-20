@@ -52,10 +52,10 @@ I wrote a binary protocol to manage the communication between the Python server 
     `sudo apt update && install python3.12-dev build-essential`
 3. Set up Python virtual environment and activate it:  
     `sudo apt update`  
-    `sudo apt install python-venv`  
+    `sudo apt install python3.12-venv`  
     `python3 -m venv venv`  
     `source venv/bin/activate`  
-4. Install dependencies: `python install -r requirements.txt`
+4. Install dependencies: `pip install -r requirements.txt`
 5. Give yourself permission to access the serial port (add to dialout group).  
     `sudo usermod -aG dialout your_username`
 
@@ -65,13 +65,8 @@ I wrote a binary protocol to manage the communication between the Python server 
 2. Install Qt Creator using the online installer for Linux (requires a Qt account):  
     https://doc.qt.io/qt-6/get-and-install-qt.html
 3. Go through the installer and make sure to install Qt Creator.
-4. The stylesheet `breeze` requires Qt5 dependencies:  
-    - `sudo apt install qtbase5-dev qtbase5-dev-tools libqt5svg5-dev`
-    - Navigate to the `build` directory, then run:  
-        `cmake -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt5 ..`
-5. Install opencv and rerun cmake:  
+4. Install opencv and rerun cmake from Qt Creator (or project build folder):  
     `sudo apt install libopencv-dev`  
-    `cmake ..`  
-6. Run Qt Creator: `qtcreator &`
-7. Click on `Open Project` and open the `CMakeLists.txt` file in the project directory.
-8. Go through the rest of the configurations.
+5. Run Qt Creator: `qtcreator &`
+6. Click on `Open Project` and open the `CMakeLists.txt` file in the project directory.
+7. Go through the rest of the configurations.

@@ -52,13 +52,15 @@ class MessageHandler:
         
         Returns the HOME message type, joint angles, and coordinates in Cartesian space.
         """
-
-        self.robot_arm.home()
-        angles_in_radians = self.robot_arm.read_joint_angle(0)
-        angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
-        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
-        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
         
+        angles_in_degrees = self.robot_arm.home()
+
+        # angles_in_radians = self.robot_arm.read_joint_angle(0)
+        # angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
+        
+        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+
+        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
         return (ProtocolParser.encode_message(MessageTypes.HOME, angles_in_degrees + rounded_xyz_position))
 
     def handle_disable(self, payload: bytes) -> bytes:
