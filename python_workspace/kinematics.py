@@ -289,7 +289,7 @@ class Kinematics():
         
         return wrist_pos_vec
 
-    def _calc_wrist_orientation(self, tf_mat):
+    def _calc_wrist_orientation(self, tf_mat: np.ndarray):
         """Calculate the orientation of the wrist in Cartesian space.
 
         Use inverse kinematics to compute the orientation of the wrist where the global origin is defined in the kinematic diagram.

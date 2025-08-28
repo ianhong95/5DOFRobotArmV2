@@ -22,13 +22,14 @@ import numpy as np
 # Custom library imports
 from scservo_sdk import *   # Uses SC Servo SDK library
 from kinematics import Kinematics
+from robot_arm.robot_core import RobotCore
 
 # Initialize logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename="api_logs.log", level=logging.INFO)
 
 
-class RobotArm:
+class PhysicalRobot:
     """Robot arm class for scripting motions.
 
     Attributes
@@ -52,30 +53,21 @@ class RobotArm:
     disable_servo(id): Disable the servo with the specified ID. Passing an ID of 0 will disable all servos.
     """
 
-    def __init__(self, sim: int = 0):
+    def __init__(self):
         # Load kinematics library class
         self._k = Kinematics("config.json")
-        self.SIM = sim
+
+        self._core = RobotCore()
 
         # Set up connection to robot
         self._load_config()
 
-        if self.SIM == False:
-            self._conn = self._start_connection()
-            self._packetHandler = sms_sts(self._conn)
-
-            self._activeServos = self._get_active_servos()  # Search for servo IDs and store them in a list
-            
-            self.current_tf = self.compute_fk() # Initialize kinematics
-
-            self._move_complete = True  # Initialize check properties
-
-            self.teach_positions = {}
-        else:
-            self._conn = None
-
+        self._conn = self._start_connection()
+        self._packetHandler = sms_sts(self._conn)
+        self._activeServos = self._get_active_servos()  # Search for servo IDs and store them in a list
+        self.current_tf = self.compute_fk() # Initialize kinematics
+        self._move_complete = True  # Initialize check properties
         self.teach_positions = {}
-        
 
         # Wait a couple of seconds for all operations to complete
         # print("Robot initialized successfully. Moving to HOME position.")
@@ -611,9 +603,6 @@ class RobotArm:
             Pass the ID of the servo to disable, or pass an ID of 0 to disable all servos.
         """
 
-        if self.SIM == 1:
-            return
-
         match id:
             case 0:
                 for id in self._activeServos:
@@ -797,8 +786,7 @@ class RobotArm:
         A numpy array for the 4x4 matrix that represents the rotation and position of the end effector.
         """
 
-        if self.SIM == 0:
-            self.read_joint_angle(0)
+        self.read_joint_angle(0)
         
         joint_angles = [joint["angle"] for joint in self.joint_info.values()]   # List comprehension to extract angle values from dictionary
 
@@ -973,13 +961,10 @@ class RobotArm:
 
         targets_in_radians = [radians(angle) for angle in self.saved_positions[0]["joint_angles"]]
 
-        if self.SIM == 0:
-            self.sync_write_angles(targets_in_radians)
-            # self.update_position_by_alias("HOME")
-            time.sleep(delay)
-            new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
-        else:
-            new_angles = [round(degrees(angle), 1) for angle in targets_in_radians]
+        self.sync_write_angles(targets_in_radians)
+        # self.update_position_by_alias("HOME")
+        time.sleep(delay)
+        new_angles = [round(degrees(joint["angle"]), 1) for joint in self.joint_info.values()]
 
         return new_angles
     

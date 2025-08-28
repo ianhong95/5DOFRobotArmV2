@@ -4,12 +4,15 @@ This class is responsible for calling encode/decode on messages, then routing th
 When this class is initialized, a handler dictionary is created. This dictionary maps each handler method to a message type
 so the handle_message method can select a method based on the received message type, which is a superior alternative to a
 very larget match/case or conditional statement.
+
+TODO: Decide if this class should handle routing to both TCP and websocket servers or just one.
 """
 
 from typing import Callable, Dict, Any  # Only for type hinting; built-in versions would create objects instead
 from math import degrees
 import struct
 from time import sleep
+import asyncio
 
 import numpy as np
 
@@ -17,56 +20,66 @@ from protocol_constants import ProtocolConstants, MessageTypes
 from protocol_parser import ProtocolParser
 from robot_class import RobotArm
 from saved_positions_handler import SavedPositionsDB
+from robot_arm.robot_manager import RobotManager
+from communication.websocket.websocket_server import WebSocketServer
+from communication.websocket.websocket_protocol_constants import WebSocketMsgTypes
 
-class MessageHandler:
+class TCPMessageHandler:
     """A class for handling incoming messages and routing them to the appropriate handler method based on the message type."""
 
-    def __init__(self, sim = 0):
+    def __init__(self, websocket_server):
+        self.websocket_server = websocket_server
+
         # Dictionary to map handler methods to message types so we can have just one generic "handle_message" method
         self.message_handlers: Dict[bytes, Callable] = {}
 
         # Initialize robot arm and database interface instance
-        self.robot_arm = RobotArm(sim)
+        self.robot_arm = RobotManager(simulation_robot_connected=1)
         self.db = SavedPositionsDB()
 
     def register_handler(self, message_type: bytes, handler: Callable):
         """Register an entry to the message_handlers dictionary."""
         self.message_handlers[message_type] = handler
 
-    def handle_message(self, incoming_message: bytes) -> bytes:
+    async def handle_message(self, incoming_message: bytes) -> bytes:
         """Extract the message type and payload, then call the appropriate handler method."""
         message_type_value, payload = ProtocolParser.decode_message(incoming_message)
 
-        response = self.message_handlers[message_type_value](payload)
+        response = await self.message_handlers[message_type_value](payload)
         
         return response
     
     def handle_connect(self, payload: bytes) -> bytes:
+        print("Handling CONNECT.")
         return (ProtocolParser.encode_message(MessageTypes.CONNECT))
 
     def handle_disconnect(self, payload: bytes) -> bytes:
         return (ProtocolParser.encode_message(MessageTypes.DISCONNECT))
 
-    def handle_home(self, payload: bytes) -> bytes:
+    async def handle_home(self, payload: bytes) -> bytes:
         """Moves the robot to the home position.
         
         Returns the HOME message type, joint angles, and coordinates in Cartesian space.
         """
         
-        angles_in_degrees = self.robot_arm.home()
+        print("Handling HOME.")
 
-        # angles_in_radians = self.robot_arm.read_joint_angle(0)
-        # angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
-        
-        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+        xyz_position, angles_in_degrees = self.robot_arm.home()
 
-        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
-        return (ProtocolParser.encode_message(MessageTypes.HOME, angles_in_degrees + rounded_xyz_position))
+        await self.websocket_server.handle_message({
+            "type": WebSocketMsgTypes.HOME,
+            "payload": {
+                "angles": angles_in_degrees,
+                "position": xyz_position
+            }
+        })
+
+        return (ProtocolParser.encode_message(MessageTypes.HOME, angles_in_degrees + xyz_position))
 
     def handle_disable(self, payload: bytes) -> bytes:
         """Disables all motors."""
 
-        self.robot_arm.disable_servo(0)
+        self.robot_arm.disable()
 
         return (ProtocolParser.encode_message(MessageTypes.DISABLE))
 
@@ -76,8 +89,8 @@ class MessageHandler:
         Returns the encoded message type and joint angles (byte representation of floats).
         """
 
-        angles_in_radians = self.robot_arm.read_joint_angle(0)
-        angles_in_degrees = [round(degrees(angle), 2) for angle in angles_in_radians]
+        angles_in_degrees = self.robot_arm.read_joint_angles()
+
         encoded_message = ProtocolParser.encode_message(MessageTypes.READ_JOINT_ANGLES, angles_in_degrees)
 
         return encoded_message
@@ -88,8 +101,7 @@ class MessageHandler:
         Returns the encoded message type and Cartesian coordinates.
         """
 
-        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
-        rounded_xyz_position = [round(coordinate, 2) for coordinate in xyz_position]
+        rounded_xyz_position = self.robot_arm.get_ee_pos()
 
         return ProtocolParser.encode_message(MessageTypes.UPDATE_EE_POSITION, rounded_xyz_position)
     
@@ -117,17 +129,11 @@ class MessageHandler:
     def handle_save_current_position(self, payload: bytes) -> bytes:
         """Save the current joint positions."""
 
-        joint_angles_radians = self.robot_arm.read_joint_angle(0)
-        joint_angles_degrees = [round(degrees(joint_angle), 2) for joint_angle in joint_angles_radians]
+        xyz_position, joint_angles_degrees = self.robot_arm.save_current_position()
 
-        xyz_position = (self.robot_arm.get_ee_pos()).tolist()
-        rounded_xyz_position = [round(coord, 2) for coord in xyz_position]
+        new_row_id = self.db.add_row(xyz_position + joint_angles_degrees)
 
-        print(rounded_xyz_position + joint_angles_degrees)
-
-        new_row_id = self.db.add_row(rounded_xyz_position + joint_angles_radians)
-
-        output = [new_row_id] + rounded_xyz_position
+        output = [new_row_id] + xyz_position
 
         print(f"Saved position: {output}")
 
@@ -138,7 +144,7 @@ class MessageHandler:
         position_entry_index = struct.unpack('<i', payload)[0]
 
         joint_angles = self.db.get_joint_angles_from_idx(position_entry_index)
-        self.robot_arm.sync_write_angles(joint_angles)
+        self.robot_arm.write_joint_angles(joint_angles)
 
     def handle_play_current_sequence(self, payload: bytes) -> bytes:
         """Move to the positions in the GUI table."""
@@ -149,15 +155,15 @@ class MessageHandler:
 
         for id in position_ids:
             joint_angles = self.db.get_joint_angles_from_idx(id)
-            self.robot_arm.sync_write_angles(joint_angles)
+            self.robot_arm.write_joint_angles(joint_angles)
             sleep(2)
 
     def handle_open_gripper(self, payload: bytes) -> bytes:
         """Sets the gripper to the fully open position."""
 
-        self.robot_arm.set_gripper_state(True)
+        self.robot_arm.set_gripper(True)
 
     def handle_close_gripper(self, payload: bytes) -> bytes:
         """Sets the gripper to the fully closed position"""
 
-        self.robot_arm.set_gripper_state(False)
+        self.robot_arm.set_gripper(False)

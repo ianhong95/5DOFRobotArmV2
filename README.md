@@ -61,7 +61,7 @@ I wrote a binary protocol to manage the communication between the Python server 
 
 ### Building Qt Development Environment
 1. Install basic requirements for Qt:  
-    `sudo apt-get install build-essential libgl1-mesa-dev`
+    `sudo apt-get install build-essential libgl1-mesa-dev qt6-websockets-dev`
 2. Install Qt Creator using the online installer for Linux (requires a Qt account):  
     https://doc.qt.io/qt-6/get-and-install-qt.html
 3. Go through the installer and make sure to install Qt Creator.

@@ -11,7 +11,7 @@ is sent backt to the client.
 import json
 import asyncio
 
-from message_handler import MessageHandler
+from tcp_message_handler import TCPMessageHandler
 from protocol_constants import ProtocolConstants, MessageTypes
 from protocol_parser import ProtocolParser
 
@@ -22,9 +22,9 @@ class TCPSocketServer:
     TODO: Move all the config loading to main.py
     """
 
-    def __init__(self, config_file: str):
+    def __init__(self, websocket_server):
         # Initialize configuration settings
-        self.config = self._load_config(config_file)
+        self.config = self._load_config("config.json")
         self.HOST_ADDR = self.config["network_settings"]["HOST"]
         self.NETWORK_PORT = self.config["network_settings"]["PORT"]
         self.client_connected = False
@@ -33,7 +33,7 @@ class TCPSocketServer:
         # self.on_message_callback = on_message_callback
 
         # Initialize communication classes and register handlers
-        self.message_handler = MessageHandler(self._ENV)
+        self.message_handler = TCPMessageHandler(websocket_server)
         self._register_handlers()
 
         # Initialize empty set (unordered, unique) to store client connections
@@ -86,7 +86,7 @@ class TCPSocketServer:
             self.HOST_ADDR,
             self.NETWORK_PORT
         )
-        print(f"Server started. Listening on {self.HOST_ADDR}:{self.NETWORK_PORT}")
+        print(f"TCP server started. Listening on {self.HOST_ADDR}:{self.NETWORK_PORT}")
 
         await self.server.serve_forever()
 
@@ -95,7 +95,7 @@ class TCPSocketServer:
         This method is called when a client connects to the server.
         """
         addr = client_writer.get_extra_info('peername')
-        print(f"Client {addr} connected!")
+        print(f"Client {addr} connected to TCP server!")
 
         try: 
             while True:
@@ -126,7 +126,7 @@ class TCPSocketServer:
         incoming_packet = await self._accumulate_packet(client_reader)
         preprocessed_message = self._strip_data(incoming_packet)
 
-        response_data = self.message_handler.handle_message(preprocessed_message)
+        response_data = await self.message_handler.handle_message(preprocessed_message)
 
         print(f"Response: {response_data}")
 
