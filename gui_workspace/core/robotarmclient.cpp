@@ -88,9 +88,8 @@ void RobotArmClient::disconnectFromServer() {
 }
 
 void RobotArmClient::onConnected() {
-    // RobotArmClient::sendMessage(ProtocolConstants::RobotMessageType::Home);
     std::vector<uint8_t> homeMessage = parser->encodeMessage(ProtocolConstants::RobotMessageType::Home);
-    RobotArmClient::sendMessage(homeMessage);
+    // RobotArmClient::sendMessage(homeMessage);
     RobotArmClient::connectionFlag = true;
     emit connStatusChanged(true);
 }

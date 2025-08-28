@@ -6,6 +6,11 @@
 #include <QVBoxLayout>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QtWebSockets/QWebSocket>
+#include <QUrl>
 
 #include <vector>
 
@@ -21,7 +26,10 @@ Robot3DView::Robot3DView(QWidget *parent)
 
     // Load HTML file
     QString htmlPath = QCoreApplication::applicationDirPath() + "/../../assets/robot3d.html";
-    qDebug() << "Qt version:" << QT_VERSION_STR;
+    qDebug() << "HTML path:" << htmlPath;
+
+    // Set up message handlers
+    setupMessageHandlers();
 
     m_webView->load(QUrl::fromLocalFile(htmlPath));
 
@@ -32,8 +40,62 @@ Robot3DView::Robot3DView(QWidget *parent)
 
     m_webView->page()->setDevToolsPage(devToolsView->page());
 
-    // TODO: Use QWebChannel and create a virtual robot controller class
+    connect(&m_webSocket, &QWebSocket::textMessageReceived, this, &Robot3DView::onWebsocketMsgRecvd);
+    connect(&m_webSocket, &QWebSocket::connected, this, &Robot3DView::onConnected);
+    connect(&m_webSocket, &QWebSocket::disconnected, this, &Robot3DView::onDisconnected);
+    connect(&m_webSocket, &QWebSocket::errorOccurred, this, &Robot3DView::onError);
 }
+
+void Robot3DView::setupMessageHandlers() {
+    Robot3DView::messageHandlers["move_to_position"] = [this](QJsonObject& jsonObj) {
+        this->moveToPosition(jsonObj);
+    };
+
+    Robot3DView::messageHandlers["home"] = [this](QJsonObject& jsonObj) {
+        this->home(jsonObj);
+    };
+}
+
+void Robot3DView::onWebsocketMsgRecvd(const QString &message) {
+    qDebug() << "Websocket message received";
+    QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
+    QJsonObject jsonObj = doc.object();
+
+    QString messageType = jsonObj["type"].toString();
+    QJsonObject jsonPayload = jsonObj["payload"].toObject();
+
+    if (messageHandlers.contains(messageType)) {
+        messageHandlers[messageType](jsonPayload);
+    }
+}
+
+/* --- HANDLE CONNECTION --- */
+
+void Robot3DView::onConnected() {
+    Robot3DView::connectionFlag = true;
+    qDebug() << "Connected to server";
+    emit onWebsocketConnected();
+}
+
+void Robot3DView::onDisconnected() {
+    Robot3DView::connectionFlag = false;
+    qDebug() << "Disconnected from server.";
+    emit onWebsocketDisconnected();
+}
+
+void Robot3DView::connectToServer(const QString host, quint16 port) {
+    Robot3DView::m_webSocket.open(QUrl("ws://" + host + ":" + QString::number(port)));
+}
+
+void Robot3DView::disconnectFromServer() {
+    Robot3DView::m_webSocket.close();
+}
+
+void Robot3DView::onError() {
+    qDebug() << "Error occurred";
+}
+
+/* --- JOINT MOVES --- */
 
 void Robot3DView::moveJ1(float angle) {
     QString script = QString("moveJ1('%1');").arg(angle);
@@ -70,7 +132,14 @@ void Robot3DView::closeGripper() {
     m_webView->page()->runJavaScript(script);
 }
 
-void Robot3DView::moveJoints(float j1Angle, float j2Angle, float j3Angle, float j4Angle, float j5Angle) {
-    QString script = QString("moveJoints('%1', '%2', '%3', '%4', '%5');").arg(j1Angle).arg(j2Angle).arg(j3Angle).arg(j4Angle).arg(j5Angle);
-    m_webView->page()->runJavaScript(script);
+void Robot3DView::moveToPosition(QJsonObject& jsonObj) {
+
+}
+
+void Robot3DView::home(QJsonObject& jsonObj) {
+    QJsonArray anglesArray = jsonObj["angles"].toArray();
+    QString jsCommand = QString("home(%1);").arg(QString::fromUtf8(QJsonDocument(anglesArray).toJson()));
+    qDebug() << "Home command: " << jsCommand;
+
+    m_webView->page()->runJavaScript(jsCommand);
 }

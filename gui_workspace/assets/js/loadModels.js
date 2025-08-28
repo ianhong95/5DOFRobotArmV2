@@ -82,6 +82,6 @@ function initializeModel (gltf, position, rotation, name) {
     model.rotation.set(...rotation);
     model.scale.set(SCALE * SCALE_FACTOR, SCALE * SCALE_FACTOR, SCALE * SCALE_FACTOR);
 
-    const axesHelper = new THREE.axesHelper(0.5);
+    const axesHelper = new THREE.AxesHelper(0.1);
     model.add(axesHelper);
 }

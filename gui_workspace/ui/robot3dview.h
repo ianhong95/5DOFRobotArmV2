@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <QWebEngineSettings>
 #include <QWebEngineProfile>
+#include <QtWebSockets/QWebSocket>
 
 #include <vector>
 
@@ -20,6 +21,8 @@ class Robot3DView : public QWidget
 public:
     explicit Robot3DView(QWidget *parent = nullptr);
 
+    QWebSocket m_webSocket;
+
     void moveJ1(float angle);
     void moveJ2(float angle);
     void moveJ3(float angle);
@@ -27,12 +30,28 @@ public:
     void rotateGripper(float angle);
     void openGripper();
     void closeGripper();
-    void moveJoints(float j1Angle, float j2Angle, float j3Angle, float j4Angle, float j5Angle);
+    void moveToPosition(QJsonObject& jsonObj);
+    void home(QJsonObject& jsonObj);
+
+    bool connectionFlag = false;
+    void connectToServer(const QString host, quint16 port);
+    void disconnectFromServer();
 
 private:
+    QMap<QString, std::function<void(QJsonObject&)>> messageHandlers;
+    void setupMessageHandlers();
     QWebEngineView *m_webView;
 
+
+private slots:
+    void onWebsocketMsgRecvd(const QString& message);
+    void onConnected();
+    void onError();
+    void onDisconnected();
+
 signals:
+    void onWebsocketConnected();
+    void onWebsocketDisconnected();
 };
 
 #endif // ROBOT3DVIEW_H

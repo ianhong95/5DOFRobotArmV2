@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <variant>
+#include <string>
 
 // Define an enum class (user-defined type for giving names to integer constants)
 namespace ProtocolConstants {

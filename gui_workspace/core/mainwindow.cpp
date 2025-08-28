@@ -29,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     client = new RobotArmClient(this);
     parser = new ProtocolParser();
     teachPanel = ui->teachPanel;
+    robot3DView = ui->visualizerWidget;
 
     // Open the video stream (adjust the string as needed)
     cap.open("tcp://robot-pi.local:60001", cv::CAP_FFMPEG);
@@ -47,6 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(teachPanel, &TeachPanel::saveCurrentPositionRequested, this, &MainWindow::saveCurrentPositionRequested);
     connect(teachPanel, &TeachPanel::moveToPositionRequested, this, &MainWindow::moveToPosition);
     connect(teachPanel, &TeachPanel::playCurrentSeqRequested, this, &MainWindow::playCurrentSequence);
+
+    connect(robot3DView, &Robot3DView::onWebsocketConnected, this, &MainWindow::websocketConnected);
+    connect(robot3DView, &Robot3DView::onWebsocketDisconnected, this, &MainWindow::websocketDisconnected);
 
     // Assign values to member variables
     connErrorMsg = QString::fromUtf8("Error: No socket connection.");
@@ -84,10 +88,16 @@ void MainWindow::on_J1SpinBox_valueChanged(double arg1) {
 
 void MainWindow::on_connectButton_clicked() {
     if (client->connectionFlag == false) {
-        client->connectToServer("127.0.0.1", 61234);
+        client->connectToServer("n95-dev.local", 61234);
     }
     else {
         client->disconnectFromServer();
+    }
+
+    if (robot3DView->connectionFlag == false) {
+        robot3DView->connectToServer("n95-dev.local", 60003);
+    } else {
+        robot3DView->disconnectFromServer();
     }
 }
 
@@ -323,12 +333,20 @@ void MainWindow::handleConnChanged(bool connected) {
     }
 }
 
+void MainWindow::websocketConnected() {
+    ui->debugTextBrowser->append("Websocket client connected.");
+}
+
+void MainWindow::websocketDisconnected() {
+    ui->debugTextBrowser->append("Websocket client disconnected.");
+}
+
 /* ===================
  * ERROR HANDLING
  * ================== */
 
 void MainWindow::handleClientConnError(const QString &errorMsg) {
-    ui->debugTextBrowser->append("Could not establish connection to socket. " + errorMsg);
+    ui->debugTextBrowser->append("handleClientConnError triggered. Could not establish connection to socket. " + errorMsg);
 }
 
 /* ==================

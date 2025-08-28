@@ -14,6 +14,7 @@
 #include "robotarmclient.h"
 #include "teachpanel.h"
 #include "ui_mainwindow.h"
+#include "robot3dview.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,6 +33,7 @@ private:
     RobotArmClient *client;
     ProtocolParser *parser;
     TeachPanel *teachPanel;
+    Robot3DView *robot3DView;
 
     QLabel *videoLabel;
     QTimer *timer;
@@ -49,6 +51,8 @@ private slots:
 
     // CONNECTION HANDLING
     void handleConnChanged(bool connected);
+    void websocketConnected();
+    void websocketDisconnected();
 
     void on_J1Slider_sliderMoved(int position);
     void on_J1SpinBox_editingFinished();

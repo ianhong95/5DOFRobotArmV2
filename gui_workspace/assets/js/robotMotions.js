@@ -41,10 +41,18 @@ function openGripper(distance=0.05) {
     ROBOT_LINKS['rightFinger'].position.z += distance;
 }
 
-function moveJoints(j1Angle, j2Angle, j3Angle, j4Angle, j5Angle) {
-    moveJ1(j1Angle);
-    moveJ2(j2Angle);
-    moveJ3(j3Angle);
-    moveJ4(j4Angle);
-    rotateGripper(j5Angle);
+function moveToPosition(angles) {
+    moveJ1(angles[0]);
+    moveJ2(angles[1]);
+    moveJ3(angles[2]);
+    moveJ4(angles[3]);
+    rotateGripper(angles[4]);
+}
+
+function home(angles) {
+    moveJ1(angles[0]);
+    moveJ2(angles[1]);
+    moveJ3(angles[2]);
+    moveJ4(angles[3]);
+    rotateGripper(angles[4]);
 }

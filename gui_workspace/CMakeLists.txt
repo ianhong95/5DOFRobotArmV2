@@ -15,6 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
     Widgets
     Network
     WebEngineWidgets
+    WebSockets
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -77,6 +78,7 @@ target_link_libraries(gui_workspace PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::WebEngineWidgets
+    Qt${QT_VERSION_MAJOR}::WebSockets
     breeze
     ${OpenCV_LIBS}
 )
