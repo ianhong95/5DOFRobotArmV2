@@ -138,7 +138,7 @@ void Robot3DView::moveToPosition(QJsonObject& jsonObj) {
 
 void Robot3DView::home(QJsonObject& jsonObj) {
     QJsonArray anglesArray = jsonObj["angles"].toArray();
-    QString jsCommand = QString("home(%1);").arg(QString::fromUtf8(QJsonDocument(anglesArray).toJson()));
+    QString jsCommand = QString("moveToPosition(%1);").arg(QString::fromUtf8(QJsonDocument(anglesArray).toJson()));
     qDebug() << "Home command: " << jsCommand;
 
     m_webView->page()->runJavaScript(jsCommand);

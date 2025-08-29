@@ -2,86 +2,58 @@
 const loader = new THREE.GLTFLoader();
 
 const SCALE = 1000;
-const SCALE_FACTOR = 2;
+const SCALE_FACTOR = 1;
 
-const ROBOT_LINKS = {};
+ROBOT_LINKS = {}
 
-loadModel(
-    'models/Robot_Base.glb',
-    [0, 0, 0],
-    [0, 0, 0],
-    'base'
-);
+/* GLTF loading MUST be asynchronous.
+ * The Promise object constructor automatically takes a resolve and reject parameter.
+ * Resolve means the Promise is complete and now has a value so you can continue.
+ * GLTF is the entire file data (including textures, etc).
+ * gltf.scene is only the ROOT of that file (the actual 3D model).
+ * */
 
-loadModel(
-    'models/Link_1.glb',
-    [0, 0.0694 * SCALE_FACTOR, 0],
-    [0, 0, 0],
-    'link1'
-);
-
-loadModel(
-    'models/Link_2.glb',
-    [0, 0.10436 * SCALE_FACTOR, 0],
-    [-Math.PI/2, 0, Math.PI/2],
-    'link2'
-);
-
-loadModel(
-    'models/Link_3.glb',
-    [0, 0.28436 * SCALE_FACTOR, 0],
-    [-Math.PI/2, 0, Math.PI/2],
-    'link3'
-);
-
-loadModel(
-    'models/Link_4.glb',
-    [0, 0.44436 * SCALE_FACTOR, 0],
-    [Math.PI/2, 0, Math.PI/2],
-    'link4'
-);
-
-loadModel(
-    'models/Gripper.glb',
-    [0, 0.51656 * SCALE_FACTOR, 0],
-    [Math.PI/2, 0, Math.PI/2],
-    'gripper'
-);
-
-loadModel(
-    'models/Gripper_finger.glb',
-    [0, 0.51656 * SCALE_FACTOR, 0],
-    [Math.PI/2, 0, Math.PI/2],
-    'rightFinger'
-);
-
-loadModel(
-    'models/Gripper_finger.glb',
-    [0, 0.51656 * SCALE_FACTOR, 0],
-    [Math.PI/2, 0, -Math.PI/2],
-    'leftFinger'
-);
-
-
-function loadModel(modelPath, position, rotation, name) {
-    loader.load(
-        modelPath,
-        (gltf) => initializeModel(gltf, position, rotation, name),
-        undefined,
-        (error) => console.error('Error loading mode: ', error)
-    )
+// This function loads the root data (3D model only) from a single gltf.
+const loadGLTF = (filePath) => {
+    return new Promise((resolve, reject) => {
+        loader.load(
+            filePath,
+            (model) => {resolve(model.scene)},
+            undefined,
+            (error) => reject(error)
+        )
+    })
 }
 
-function initializeModel (gltf, position, rotation, name) {
-    const model = gltf.scene;
-    scene.add(model);
+// Load all parts in parallel. This is faster than doing individual await loadGLTF() calls.
+async function loadRobot() {
+    const [base, link1, link2, link3, link4, gripper, leftFinger, rightFinger] = await Promise.all([
+        loadGLTF('models/Robot_Base.glb'),
+        loadGLTF('models/Link_1.glb'),
+        loadGLTF('models/Link_2.glb'),
+        loadGLTF('models/Link_3.glb'),
+        loadGLTF('models/Link_4.glb'),
+        loadGLTF('models/Gripper.glb'),
+        loadGLTF('models/Gripper_finger.glb'),
+        loadGLTF('models/Gripper_finger.glb')
+    ])
 
-    ROBOT_LINKS[name] = model;
+    base.scale.set(SCALE, SCALE, SCALE);
+    setupPart(base, scene, 'base', [0, 0, 0], [0, 0, 0]);
+    setupPart(link1, base, 'link1', [0, 0.075 / SCALE, 0], [0, 0, 0]);
+    setupPart(link2, link1, 'link2', [0, 0.02996 / SCALE, 0], [-Math.PI/2, 0, Math.PI/2]);
+    setupPart(link3, link2, 'link3', [0, 0, 0.180 / SCALE], [0, 0, 0]);
+    setupPart(link4, link3, 'link4', [0, 0, 0.160 / SCALE], [Math.PI, 0, 0]);
+    setupPart(gripper, link4, 'gripper', [0, 0, -0.0722 / SCALE], [0, 0, 0]);
+    setupPart(leftFinger, gripper, 'leftFinger', [0.001 / SCALE, 0, 0], [0, 0, 0]);
+    setupPart(rightFinger, gripper, 'rightFinger', [-0.001 / SCALE, 0, 0], [0, 0, Math.PI]);
+}
 
+function setupPart(model, parent, name, position, rotation) {
+    parent.add(model);
     model.position.set(...position);
     model.rotation.set(...rotation);
-    model.scale.set(SCALE * SCALE_FACTOR, SCALE * SCALE_FACTOR, SCALE * SCALE_FACTOR);
-
-    const axesHelper = new THREE.AxesHelper(0.1);
-    model.add(axesHelper);
+    ROBOT_LINKS[name] = model;
 }
+
+loadRobot();
