@@ -25,6 +25,16 @@ const loadGLTF = (filePath) => {
     })
 }
 
+function loadNextScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
 // Load all parts in parallel. This is faster than doing individual await loadGLTF() calls.
 async function loadRobot() {
     const [base, link1, link2, link3, link4, gripper, leftFinger, rightFinger] = await Promise.all([
@@ -43,10 +53,18 @@ async function loadRobot() {
     setupPart(link1, base, 'link1', [0, 0.075 / SCALE, 0], [0, 0, 0]);
     setupPart(link2, link1, 'link2', [0, 0.02996 / SCALE, 0], [-Math.PI/2, 0, Math.PI/2]);
     setupPart(link3, link2, 'link3', [0, 0, 0.180 / SCALE], [0, 0, 0]);
-    setupPart(link4, link3, 'link4', [0, 0, 0.160 / SCALE], [Math.PI, 0, 0]);
+    setupPart(link4, link3, 'link4', [0, 0, 0.160 / SCALE], [0, Math.PI, 0]);
     setupPart(gripper, link4, 'gripper', [0, 0, -0.0722 / SCALE], [0, 0, 0]);
     setupPart(leftFinger, gripper, 'leftFinger', [0.001 / SCALE, 0, 0], [0, 0, 0]);
     setupPart(rightFinger, gripper, 'rightFinger', [-0.001 / SCALE, 0, 0], [0, 0, Math.PI]);
+
+    console.log('Robot models loaded.');
+
+    // Load robotmotion script after models have been loaded to avoid undefined errors.
+    loadNextScript('js/robotMotions.js')
+        .then(() => {
+            console.log('robotMotion.js loaded.');
+        });
 }
 
 function setupPart(model, parent, name, position, rotation) {

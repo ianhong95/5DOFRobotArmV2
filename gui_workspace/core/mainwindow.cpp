@@ -73,8 +73,9 @@ void MainWindow::updateFrame() {
 }
 
 void MainWindow::on_J1Slider_sliderMoved(int position) {
-//    ui->J1SpinBox->setText(QString::number(position));
     ui->J1SpinBox->setValue(position);
+    // std::vector<uint8_t> moveJ1Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::MoveJ1, (std::vector<float>) position);
+    // client->sendMessage(moveJ1Message);
 }
 
 void MainWindow::on_J1SpinBox_editingFinished() {
@@ -83,7 +84,6 @@ void MainWindow::on_J1SpinBox_editingFinished() {
 
 void MainWindow::on_J1SpinBox_valueChanged(double arg1) {
     ui->J1Slider->setValue(arg1);
-    // client->sendMessage(QString::number(arg1));
 }
 
 void MainWindow::on_connectButton_clicked() {

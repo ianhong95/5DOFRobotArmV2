@@ -137,9 +137,9 @@ void Robot3DView::moveToPosition(QJsonObject& jsonObj) {
 }
 
 void Robot3DView::home(QJsonObject& jsonObj) {
+    // These values are in DEGREES. Need to convert to radians!
     QJsonArray anglesArray = jsonObj["angles"].toArray();
-    QString jsCommand = QString("moveToPosition(%1);").arg(QString::fromUtf8(QJsonDocument(anglesArray).toJson()));
-    qDebug() << "Home command: " << jsCommand;
+    QString jsCommand = QString("home(%1);").arg(QString::fromUtf8(QJsonDocument(anglesArray).toJson(QJsonDocument::Compact)));
 
     m_webView->page()->runJavaScript(jsCommand);
 }
