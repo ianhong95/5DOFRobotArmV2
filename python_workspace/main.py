@@ -10,7 +10,7 @@ TODO:
 
 import asyncio
 
-from tcp_socket_server import TCPSocketServer
+from communication.tcp.tcp_socket_server import TCPSocketServer
 from communication.websocket.websocket_server import WebSocketServer
 
 async def main():

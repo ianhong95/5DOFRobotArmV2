@@ -21,7 +21,7 @@ import numpy as np
 
 # Custom library imports
 from scservo_sdk import *   # Uses SC Servo SDK library
-from kinematics import Kinematics
+from robot_arm.kinematics import Kinematics
 
 # Initialize logger
 logger = logging.getLogger(__name__)

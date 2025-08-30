@@ -11,9 +11,9 @@ is sent backt to the client.
 import json
 import asyncio
 
-from tcp_message_handler import TCPMessageHandler
-from protocol_constants import ProtocolConstants, MessageTypes
-from protocol_parser import ProtocolParser
+from communication.tcp.tcp_message_handler import TCPMessageHandler
+from communication.tcp.protocol_constants import ProtocolConstants, MessageTypes
+from communication.tcp.protocol_parser import ProtocolParser
 
 class TCPSocketServer:
     """

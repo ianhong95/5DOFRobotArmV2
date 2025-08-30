@@ -16,10 +16,10 @@ import asyncio
 
 import numpy as np
 
-from protocol_constants import ProtocolConstants, MessageTypes
-from protocol_parser import ProtocolParser
-from robot_class import RobotArm
-from saved_positions_handler import SavedPositionsDB
+from communication.tcp.protocol_constants import ProtocolConstants, MessageTypes
+from communication.tcp.protocol_parser import ProtocolParser
+from robot_arm.robot_class import RobotArm
+from robot_arm.saved_positions_handler import SavedPositionsDB
 from robot_arm.robot_manager import RobotManager
 from communication.websocket.websocket_server import WebSocketServer
 from communication.websocket.websocket_protocol_constants import WebSocketMsgTypes

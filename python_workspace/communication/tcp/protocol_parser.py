@@ -5,7 +5,7 @@ pieces of data based on the message type.
 """
 
 import struct
-from protocol_constants import ProtocolConstants, MessageTypes, ResponseTypes
+from communication.tcp.protocol_constants import ProtocolConstants, MessageTypes, ResponseTypes
 
 class ProtocolParser:
     """A class to encode/decode messages according to the protocol defined in ProtocolConstants."""

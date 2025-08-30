@@ -9,7 +9,7 @@ import os
 
 # sys.path hack to import a module from a parent directory. This basically adds the parent directory to PATH.
 sys.path.append("..")
-from robot_class import RobotArm
+from robot_arm.robot_class import RobotArm
 
 sys.path.append("../scservo_sdk")
 
