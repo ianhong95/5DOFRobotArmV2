@@ -292,3 +292,16 @@ class SimulationRobot:
         new_angles = [round(degrees(angle), 1) for angle in targets_in_radians]
 
         return new_angles
+
+    def set_joint_angle(self, joint: int, angle: float):
+        """Set a target joint angle in degrees.
+        
+        TODO: Does this method actually need to do anything, or just internally update
+        joint state?
+            - I think this method needs to internally update joint state and also provide some
+            feedback to Qt. Qt shouldn't send commands directly to the simulation or else the
+            client and server states could become decoupled. The server needs to be involved
+            and be aware of everything that goes on in the client.
+        """
+
+        self._core.joint_info[joint]["angle"] = angle

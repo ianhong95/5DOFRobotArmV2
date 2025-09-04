@@ -136,7 +136,7 @@ class RobotManager:
 
         if self.physical_robot:
             joint_angles_radians = self.physical_robot.read_joint_angle(0)
-            xyz_position = (self.robot_arm.get_ee_pos()).tolist()
+            xyz_position = (self.physical_robot.get_ee_pos()).tolist()
         else:
             # joint_angles_radians = self.simulation_robot.read_joint_angle(0)
             xyz_position = (self.simulation_robot.get_ee_pos()).tolist()
@@ -153,3 +153,13 @@ class RobotManager:
             self.physical_robot.sync_write_angles(joint_angles)
 
         # Implement a method to write angles to simulation robot
+
+    def set_joint_angle(self, joint: int, angle: float) -> float:
+        """Sets a target angle for the specified joint."""
+
+        if self.physical_robot:
+            self.physical_robot.write_angle(self.physical_robot.joint_info[joint]["servo_id"], angle)
+        else:
+            self.simulation_robot._core.joint_info[joint]["angle"] = angle
+
+        return angle

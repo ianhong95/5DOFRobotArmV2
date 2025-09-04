@@ -73,6 +73,11 @@ class TCPSocketServer:
             self.message_handler.register_handler(MessageTypes.PLAY_CURRENT_SEQUENCE, self.message_handler.handle_play_current_sequence)
             self.message_handler.register_handler(MessageTypes.OPEN_GRIPPER, self.message_handler.handle_open_gripper)
             self.message_handler.register_handler(MessageTypes.CLOSE_GRIPPER, self.message_handler.handle_close_gripper)
+            self.message_handler.register_handler(MessageTypes.SET_J1, self.message_handler.handle_set_J1)
+            self.message_handler.register_handler(MessageTypes.SET_J2, self.message_handler.handle_set_J1)
+            self.message_handler.register_handler(MessageTypes.SET_J3, self.message_handler.handle_set_J1)
+            self.message_handler.register_handler(MessageTypes.SET_J4, self.message_handler.handle_set_J1)
+            self.message_handler.register_handler(MessageTypes.SET_J5, self.message_handler.handle_set_J1)
 
         print("Message handlers registered.")
 

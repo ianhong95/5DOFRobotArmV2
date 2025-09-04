@@ -43,6 +43,7 @@ class TCPMessageHandler:
 
     async def handle_message(self, incoming_message: bytes) -> bytes:
         """Extract the message type and payload, then call the appropriate handler method."""
+
         message_type_value, payload = ProtocolParser.decode_message(incoming_message)
 
         response = await self.message_handlers[message_type_value](payload)
@@ -167,3 +168,43 @@ class TCPMessageHandler:
         """Sets the gripper to the fully closed position"""
 
         self.robot_arm.set_gripper(False)
+
+    async def handle_set_J1(self, payload: bytes) -> bytes:
+        """Manually move J1 to an absolute position."""
+
+        target_angle = (struct.unpack('f', payload))[0]     # THIS IS IN DEGREES
+        self.robot_arm.set_joint_angle(1, target_angle)
+
+        return ProtocolParser.encode_message(MessageTypes.SET_J1, [target_angle])
+    
+    async def handle_set_J2(self, payload: bytes) -> bytes:
+        """Manually move J2 to an absolute position."""
+
+        target_angle = (struct.unpack('f', payload))[0]     # THIS IS IN DEGREES
+        self.robot_arm.set_joint_angle(2, target_angle)
+
+        return ProtocolParser.encode_message(MessageTypes.SET_J2, [target_angle])
+    
+    async def handle_set_J3(self, payload: bytes) -> bytes:
+        """Manually move J3 to an absolute position."""
+
+        target_angle = (struct.unpack('f', payload))[0]     # THIS IS IN DEGREES
+        self.robot_arm.set_joint_angle(3, target_angle)
+
+        return ProtocolParser.encode_message(MessageTypes.SET_J3, [target_angle])
+    
+    async def handle_set_J4(self, payload: bytes) -> bytes:
+        """Manually move J4 to an absolute position."""
+
+        target_angle = (struct.unpack('f', payload))[0]     # THIS IS IN DEGREES
+        self.robot_arm.set_joint_angle(4, target_angle)
+
+        return ProtocolParser.encode_message(MessageTypes.SET_J4, [target_angle])
+    
+    async def handle_set_J5(self, payload: bytes) -> bytes:
+        """Manually move J5 to an absolute position."""
+
+        target_angle = (struct.unpack('f', payload))[0]     # THIS IS IN DEGREES
+        self.robot_arm.set_joint_angle(5, target_angle)
+
+        return ProtocolParser.encode_message(MessageTypes.SET_J5, [target_angle])
