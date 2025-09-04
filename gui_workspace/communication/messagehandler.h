@@ -39,6 +39,12 @@ private:
     void handleMoveToPosition(std::vector<uint8_t> payload, DataVariant& output);
     void handlePlayCurrentSequence(std::vector<uint8_t> payload, DataVariant& output);
 
+    void handleSetJ1(std::vector<uint8_t> payload, DataVariant& output);
+    void handleSetJ2(std::vector<uint8_t> payload, DataVariant& output);
+    void handleSetJ3(std::vector<uint8_t> payload, DataVariant& output);
+    void handleSetJ4(std::vector<uint8_t> payload, DataVariant& output);
+    void handleSetJ5(std::vector<uint8_t> payload, DataVariant& output);
+
     std::unordered_map<ProtocolConstants::RobotMessageType, HandlerFunction> message_handlers;
 
     ProtocolParser* parser;

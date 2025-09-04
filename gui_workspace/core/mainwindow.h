@@ -55,8 +55,23 @@ private slots:
     void websocketDisconnected();
 
     void on_J1Slider_sliderMoved(int position);
-    void on_J1SpinBox_editingFinished();
+    void on_J2Slider_sliderMoved(int position);
+    void on_J3Slider_sliderMoved(int position);
+    void on_J4Slider_sliderMoved(int position);
+    void on_J5Slider_sliderMoved(int position);
+
     void on_J1SpinBox_valueChanged(double arg1);
+    void on_J2SpinBox_valueChanged(double arg1);
+    void on_J3SpinBox_valueChanged(double arg1);
+    void on_J4SpinBox_valueChanged(double arg1);
+    void on_J5SpinBox_valueChanged(double arg1);
+
+    void on_J1SpinBox_editingFinished();
+    void on_J2SpinBox_editingFinished();
+    void on_J3SpinBox_editingFinished();
+    void on_J4SpinBox_editingFinished();
+    void on_J5SpinBox_editingFinished();
+
     void on_connectButton_clicked();
     void on_disableAllButton_clicked();
     void on_homeButton_clicked();
@@ -95,6 +110,7 @@ private slots:
     void on_moveJ3Button_clicked();
     void on_moveJ4Button_clicked();
     void on_moveJ5Button_clicked();
+
 };
 
 #endif // MAINWINDOW_H

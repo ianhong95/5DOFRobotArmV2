@@ -52,6 +52,21 @@ void RobotArmClient::setupSignals() {
     RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SaveCurrentPosition, [this](DataVariant signalData) {
         this->emitSavePosRespRecvd(signalData);
     });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SetJ1, [this](DataVariant signalData) {
+        this->emitSetJ1Recvd(signalData);
+    });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SetJ2, [this](DataVariant signalData) {
+        this->emitSetJ2Recvd(signalData);
+    });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SetJ3, [this](DataVariant signalData) {
+        this->emitSetJ3Recvd(signalData);
+    });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SetJ4, [this](DataVariant signalData) {
+        this->emitSetJ4Recvd(signalData);
+    });
+    RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType::SetJ5, [this](DataVariant signalData) {
+        this->emitSetJ5Recvd(signalData);
+    });
 }
 
 void RobotArmClient::registerSignal(ProtocolConstants::RobotMessageType messageType, RobotArmClient::SignalFunction signalFunction) {
@@ -158,6 +173,12 @@ void RobotArmClient::emitSavePosRespRecvd(DataVariant signalData) {
     SavedXYZPosition savedXYZPositionData = std::get<SavedXYZPosition>(signalData);
     emit savePosRespRecvd(savedXYZPositionData);
 }
+
+void RobotArmClient::emitSetJ1Recvd(DataVariant signalData) {}
+void RobotArmClient::emitSetJ2Recvd(DataVariant signalData) {}
+void RobotArmClient::emitSetJ3Recvd(DataVariant signalData) {}
+void RobotArmClient::emitSetJ4Recvd(DataVariant signalData) {}
+void RobotArmClient::emitSetJ5Recvd(DataVariant signalData) {}
 
 /* ===============
  * ERROR HANDLING

@@ -56,6 +56,12 @@ private:
     void emitDisconnect(DataVariant signalData);
     void emitSavePosRespRecvd(DataVariant signalData);
 
+    void emitSetJ1Recvd(DataVariant signalData);
+    void emitSetJ2Recvd(DataVariant signalData);
+    void emitSetJ3Recvd(DataVariant signalData);
+    void emitSetJ4Recvd(DataVariant signalData);
+    void emitSetJ5Recvd(DataVariant signalData);
+
 signals:
     void connError(const QString &errorMsg);
     void connStatusChanged(bool connected);

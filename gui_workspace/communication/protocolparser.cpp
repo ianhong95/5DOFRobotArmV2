@@ -47,7 +47,7 @@ std::vector<uint8_t> ProtocolParser::encodeMessage(ProtocolConstants::RobotMessa
     uint8_t encodedMessageType = static_cast<uint8_t>(messageType);
     std::vector<uint8_t> messageByteArray;
 
-    messageByteArray.resize(1 + payload.size() * sizeof(float));
+    messageByteArray.resize(payload.size() * sizeof(float));
 
     messageByteArray.insert(messageByteArray.begin(), encodedMessageType);
     memcpy(messageByteArray.data() + 1, payload.data(), payload.size() * sizeof(float));
@@ -112,6 +112,7 @@ constexpr size_t ProtocolParser::getMessageLength(ProtocolConstants::RobotMessag
         case MsgT::SaveCurrentPosition: return static_cast<size_t>(MsgL::SaveCurrentPosition);
         case MsgT::MoveToPosition: return static_cast<size_t>(MsgL::MoveToPosition);
         case MsgT::PlayCurrentSequence: return static_cast<size_t>(MsgL::PlayCurrentSequence);
+        case MsgT::SetJ1: return static_cast<size_t>(MsgL::SetJ1);
         default:
             std::cout << "No length found!";
             return static_cast<size_t>(0);

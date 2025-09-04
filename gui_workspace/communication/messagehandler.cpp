@@ -48,6 +48,21 @@ void MessageHandler::setupHandlers() {
     MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::PlayCurrentSequence, [this](std::vector<uint8_t> payload, DataVariant& output) {
         this->handlePlayCurrentSequence(payload, output);
     });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SetJ1, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSetJ1(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SetJ2, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSetJ2(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SetJ3, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSetJ3(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SetJ4, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSetJ4(payload, output);
+    });
+    MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType::SetJ5, [this](std::vector<uint8_t> payload, DataVariant& output) {
+        this->handleSetJ5(payload, output);
+    });
 }
 
 void MessageHandler::registerMessageHandler(ProtocolConstants::RobotMessageType messageType, MessageHandler::HandlerFunction handler) {
@@ -130,3 +145,9 @@ void MessageHandler::handleMoveToPosition(std::vector<uint8_t> payload, DataVari
 void MessageHandler::handlePlayCurrentSequence(std::vector<uint8_t> payload, DataVariant &output) {
 
 }
+
+void MessageHandler::handleSetJ1(std::vector<uint8_t> payload, DataVariant &output) {}
+void MessageHandler::handleSetJ2(std::vector<uint8_t> payload, DataVariant &output) {}
+void MessageHandler::handleSetJ3(std::vector<uint8_t> payload, DataVariant &output) {}
+void MessageHandler::handleSetJ4(std::vector<uint8_t> payload, DataVariant &output) {}
+void MessageHandler::handleSetJ5(std::vector<uint8_t> payload, DataVariant &output) {}

@@ -72,19 +72,104 @@ void MainWindow::updateFrame() {
     }
 }
 
+/* --- Joint slider moved --- */
+
 void MainWindow::on_J1Slider_sliderMoved(int position) {
+    std::vector<float> jointAngle;
     ui->J1SpinBox->setValue(position);
-    // std::vector<uint8_t> moveJ1Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::MoveJ1, (std::vector<float>) position);
-    // client->sendMessage(moveJ1Message);
+    ui->visualizerWidget->moveJ1((float)position * M_PI / 180.0);
+
+    jointAngle.insert(jointAngle.begin(), (float) position);
+    std::vector<uint8_t> moveJ1Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::SetJ1, jointAngle);
+    client->sendMessage(moveJ1Message);
 }
+
+void MainWindow::on_J2Slider_sliderMoved(int position) {
+    std::vector<float> jointAngle;
+    ui->J2SpinBox->setValue(position);
+    ui->visualizerWidget->moveJ2((float)position * M_PI / 180.0);
+
+    jointAngle.insert(jointAngle.begin(), (float) position);
+    std::vector<uint8_t> moveJ2Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::SetJ2, jointAngle);
+    client->sendMessage(moveJ2Message);
+}
+
+void MainWindow::on_J3Slider_sliderMoved(int position) {
+    std::vector<float> jointAngle;
+    ui->J3SpinBox->setValue(position);
+    ui->visualizerWidget->moveJ3((float)position * M_PI / 180.0);
+
+    jointAngle.insert(jointAngle.begin(), (float) position);
+    std::vector<uint8_t> moveJ3Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::SetJ3, jointAngle);
+    client->sendMessage(moveJ3Message);
+}
+
+void MainWindow::on_J4Slider_sliderMoved(int position) {
+    std::vector<float> jointAngle;
+    ui->J4SpinBox->setValue(position);
+    ui->visualizerWidget->moveJ4((float)position * M_PI / 180.0);
+
+    jointAngle.insert(jointAngle.begin(), (float) position);
+    std::vector<uint8_t> moveJ4Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::SetJ4, jointAngle);
+    client->sendMessage(moveJ4Message);
+}
+
+void MainWindow::on_J5Slider_sliderMoved(int position) {
+    std::vector<float> jointAngle;
+    ui->J5SpinBox->setValue(position);
+    ui->visualizerWidget->rotateGripper((float)position * M_PI / 180.0);
+
+    jointAngle.insert(jointAngle.begin(), (float) position);
+    std::vector<uint8_t> moveJ5Message = parser->encodeMessage(ProtocolConstants::RobotMessageType::SetJ5, jointAngle);
+    client->sendMessage(moveJ5Message);
+}
+
+/* --- Joint spinbox editing finished --- */
 
 void MainWindow::on_J1SpinBox_editingFinished() {
-
+    float angleInRadians = ui->J1SpinBox->value() * M_PI / 180.0;
+    ui->visualizerWidget->moveJ1(angleInRadians);
 }
+
+void MainWindow::on_J2SpinBox_editingFinished() {
+    ui->visualizerWidget->moveJ2((ui->J2SpinBox->value() * M_PI / 180.0));
+}
+
+void MainWindow::on_J3SpinBox_editingFinished() {
+    ui->visualizerWidget->moveJ3((ui->J3SpinBox->value() * M_PI / 180.0));
+}
+
+void MainWindow::on_J4SpinBox_editingFinished() {
+    ui->visualizerWidget->moveJ4((ui->J4SpinBox->value() * M_PI / 180.0));
+}
+
+void MainWindow::on_J5SpinBox_editingFinished() {
+    ui->visualizerWidget->rotateGripper((ui->J5SpinBox->value() * M_PI / 180.0));
+}
+
+/* --- Joint spinbox value changed --- */
 
 void MainWindow::on_J1SpinBox_valueChanged(double arg1) {
     ui->J1Slider->setValue(arg1);
 }
+
+void MainWindow::on_J2SpinBox_valueChanged(double arg1) {
+    ui->J2Slider->setValue(arg1);
+}
+
+void MainWindow::on_J3SpinBox_valueChanged(double arg1) {
+    ui->J3Slider->setValue(arg1);
+}
+
+void MainWindow::on_J4SpinBox_valueChanged(double arg1) {
+    ui->J4Slider->setValue(arg1);
+}
+
+void MainWindow::on_J5SpinBox_valueChanged(double arg1) {
+    ui->J5Slider->setValue(arg1);
+}
+
+/* --- Shortcut buttons clicked --- */
 
 void MainWindow::on_connectButton_clicked() {
     if (client->connectionFlag == false) {
@@ -387,7 +472,6 @@ void MainWindow::on_closeGripperButton_clicked() {
     ui->gripperStateLbl->setText("Current gripper state: CLOSE");
 }
 
-
 void MainWindow::on_moveJ1Button_clicked() {
     float j1Angle = (ui->J1SpinBox->value()) * M_PI / 180.0;
     ui->visualizerWidget->moveJ1(j1Angle);
@@ -412,4 +496,3 @@ void MainWindow::on_moveJ5Button_clicked() {
     float gripperAngle = (ui->J5SpinBox->value()) * M_PI / 180.0;
     ui->visualizerWidget->rotateGripper(gripperAngle);
 }
-
